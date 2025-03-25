@@ -57,3 +57,7 @@ Resources
 Neovim Documentation - https://neovim.io/doc/
 tmux Manual - https://man.openbsd.org/tmux
 My blog post on terminal-based development - https://joshuamichaelhall.com/blog/terminal-based-development-environment
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
