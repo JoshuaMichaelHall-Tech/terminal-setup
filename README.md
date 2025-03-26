@@ -97,7 +97,7 @@ This project is actively being developed and refined. Current focus areas:
 
 ### Known Issues
 
-- **LSP Server Names**: The Neovim LSP configuration uses server names that might change in future versions of nvim-lspconfig. If you receive deprecation warnings, check the [nvim-lspconfig repository](https://github.com/neovim/nvim-lspconfig) for current server names.
+- **LSP Server Names**: Mason-lspconfig uses specific server names that may differ from package names. For Ruby, use `rubylsp` (not `ruby_lsp`). For TypeScript, use `tsserver`. If you receive errors about invalid server names, check the [server mapping documentation](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md).
 - **Font Rendering**: Some terminals may have issues displaying Nerd Font icons. Make sure you've properly configured your terminal to use the JetBrainsMono Nerd Font.
 - **Language Server Installation**: Some language servers may require additional dependencies. Check the Mason UI (`:Mason` in Neovim) for details.
 
