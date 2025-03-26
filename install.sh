@@ -428,16 +428,18 @@ return {
     config = function()
       require('mason').setup()
       require('mason-lspconfig').setup({
-        ensure_installed = { 'lua_ls', 'ruby_ls', 'pyright', 'tsserver' }
+        -- Note: Server names might change in future lspconfig versions
+        -- Check https://github.com/neovim/nvim-lspconfig for the latest names
+        ensure_installed = { 'lua_ls', 'ruby_lsp', 'pyright', 'tsserver' }
       })
       
       local lspconfig = require('lspconfig')
       
       -- Basic LSP setup for the languages you use
       lspconfig.lua_ls.setup{}
-      lspconfig.ruby_ls.setup{}
-      lspconfig.pyright.setup{}
-      lspconfig.tsserver.setup{}
+      lspconfig.ruby_lsp.setup{}  -- For Ruby development
+      lspconfig.pyright.setup{}   -- For Python development
+      lspconfig.tsserver.setup{}  -- For TypeScript/JavaScript development
       
       -- Global LSP mappings
       vim.keymap.set('n', 'gd', vim.lsp.buf.definition)
