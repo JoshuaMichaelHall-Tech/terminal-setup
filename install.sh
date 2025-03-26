@@ -522,8 +522,14 @@ return {
 }
 EOL
 
-# Create Neovim undodir
-mkdir -p ~/.vim/undodir
+# Final steps
+log_success "Installation completed successfully!"
+
+# Install essential fonts
+log_info "Installing Nerd Fonts for proper icon display..."
+brew tap homebrew/cask-fonts
+brew install --cask font-jetbrains-mono-nerd-font
+brew install --cask font-hack-nerd-font
 
 # Install additional productivity tools
 log_info "Installing additional productivity tools..."
@@ -531,9 +537,6 @@ brew install --cask rectangle
 brew install ranger
 brew install fzf
 $(brew --prefix)/opt/fzf/install --all
-
-# Final steps
-log_success "Installation completed successfully!"
 echo ""
 echo "==================================================================="
 echo "                    NEXT STEPS AND NOTES                         "
@@ -544,8 +547,11 @@ echo ""
 echo "1. Switch to Zsh if you're not already using it:"
 echo "   chsh -s $(which zsh)"
 echo ""
-echo "2. If using VS Code, set the terminal to Zsh:"
-echo "   Settings → Terminal → Default Profile → Select 'zsh'"
+echo "2. Configure your terminal:"
+echo "   - iTerm2: Preferences → Profiles → Text → Font → Select 'JetBrainsMono Nerd Font'"
+echo "   - VS Code: "
+echo "     • Settings → Terminal → Default Profile → Select 'zsh'"
+echo "     • Settings → Terminal › Integrated: Font Family → 'JetBrainsMono Nerd Font'"
 echo ""
 echo "3. Start a new Zsh terminal (don't source .zshrc from bash!)"
 echo ""

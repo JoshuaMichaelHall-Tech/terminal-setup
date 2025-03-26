@@ -39,10 +39,24 @@ brew install --cask iterm2
 ```
 
 **Configuration Recommendations:**
-- Font: JetBrains Mono or Fira Code (12-14pt)
+- Font: JetBrainsMono Nerd Font or Hack Nerd Font (12-14pt)
+  ```bash
+  # Install Nerd Fonts
+  brew tap homebrew/cask-fonts
+  brew install --cask font-jetbrains-mono-nerd-font
+  brew install --cask font-hack-nerd-font
+  ```
 - Color scheme: Tokyo Night, Solarized Dark, or One Dark
 - Enable Natural Text Editing (Preferences > Profiles > Keys > Load Preset)
 - Window dimensions: 140×40
+
+**Font Configuration:**
+1. Open iTerm2 Preferences (Cmd+,)
+2. Go to Profiles > Text
+3. Click "Change Font"
+4. Select "JetBrainsMono Nerd Font" or "Hack Nerd Font"
+5. Set size to 14pt
+6. Check "Use ligatures" (optional, for JetBrainsMono)
 
 ### 4. Configure Shell Environment
 

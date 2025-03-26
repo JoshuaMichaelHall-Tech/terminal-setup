@@ -60,13 +60,23 @@ After running the installation script, you'll need to:
    - If using VS Code: Go to Settings → Terminal → Default Profile → Select 'zsh'
    - Start a new terminal window (don't source `.zshrc` from Bash!)
 
-2. **Configure Powerlevel10k:** Run `p10k configure` in your Zsh terminal.
+2. **Configure Nerd Fonts:** The environment uses special fonts for icons and symbols.
+   - In iTerm2: Preferences → Profiles → Text → Font → Select 'JetBrainsMono Nerd Font'
+   - In VS Code: Settings → Terminal › Integrated: Font Family → 'JetBrainsMono Nerd Font'
+   - Font size of 14-16pt is recommended for best readability
 
-3. **Install Neovim Plugins:** Open Neovim with `nvim` and wait for plugins to install.
+3. **Configure Powerlevel10k:** Run `p10k configure` in your Zsh terminal.
 
-4. **Install tmux Plugins:** In tmux, press `Ctrl+a` followed by `I` to install plugins.
+4. **Install Neovim Plugins:** Open Neovim with `nvim` and wait for plugins to install.
 
-5. **Restart Your Terminal:** For all changes to take effect.
+5. **Install tmux Plugins:** In tmux, press `Ctrl+a` followed by `I` to install plugins.
+
+6. **Restart Your Terminal:** For all changes to take effect.
+
+If fonts are displaying incorrectly (missing icons, broken symbols), make sure you've:
+- Installed the Nerd Fonts using the script
+- Configured your terminal emulator to use the Nerd Font
+- Selected a compatible font size and terminal color scheme
 
 The script creates a backup of your previous configuration in `~/terminal_env_backup_TIMESTAMP/`. If you need to restore your previous setup, you can copy files from this directory back to their original locations.
 
