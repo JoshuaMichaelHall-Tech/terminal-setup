@@ -55,10 +55,18 @@ chmod +x install.sh
 
 After running the installation script, you'll need to:
 
-1. **Configure Powerlevel10k:** Run `p10k configure` in your terminal.
-2. **Install Neovim Plugins:** Open Neovim with `nvim` and wait for plugins to install.
-3. **Install tmux Plugins:** In tmux, press `Ctrl+a` followed by `I` to install plugins.
-4. **Restart Your Terminal:** For all changes to take effect.
+1. **Use Zsh:** This environment is designed specifically for Zsh, not Bash.
+   - If you're not already using Zsh: `chsh -s $(which zsh)`
+   - If using VS Code: Go to Settings → Terminal → Default Profile → Select 'zsh'
+   - Start a new terminal window (don't source `.zshrc` from Bash!)
+
+2. **Configure Powerlevel10k:** Run `p10k configure` in your Zsh terminal.
+
+3. **Install Neovim Plugins:** Open Neovim with `nvim` and wait for plugins to install.
+
+4. **Install tmux Plugins:** In tmux, press `Ctrl+a` followed by `I` to install plugins.
+
+5. **Restart Your Terminal:** For all changes to take effect.
 
 The script creates a backup of your previous configuration in `~/terminal_env_backup_TIMESTAMP/`. If you need to restore your previous setup, you can copy files from this directory back to their original locations.
 
