@@ -35,17 +35,36 @@ This repository contains my terminal-based development environment configuration
 
 ## Getting Started
 
-Please see the [Setup Guide](./SETUP.md) for detailed installation instructions and the [Tutorial](./TUTORIAL.md) for workflow examples.
+### Option 1: Automated Installation (Recommended)
 
-### Quick Start
+The automated installation script will back up your existing configurations, set up a clean environment, and install all required components.
 
 ```bash
 # Clone the repository
 git clone https://github.com/JoshuaMichaelHall-Tech/terminal-setup.git
 cd terminal-setup
 
-# Run the installation script (coming soon)
+# Make the installation script executable
+chmod +x install.sh
+
+# Run the installation script
 ./install.sh
+```
+
+#### Post-Installation Steps
+
+After running the installation script, you'll need to:
+
+1. **Configure Powerlevel10k:** Run `p10k configure` in your terminal.
+2. **Install Neovim Plugins:** Open Neovim with `nvim` and wait for plugins to install.
+3. **Install tmux Plugins:** In tmux, press `Ctrl+a` followed by `I` to install plugins.
+4. **Restart Your Terminal:** For all changes to take effect.
+
+The script creates a backup of your previous configuration in `~/terminal_env_backup_TIMESTAMP/`. If you need to restore your previous setup, you can copy files from this directory back to their original locations.
+
+### Option 2: Manual Installation
+
+For those who prefer more control over the installation process, please see the [Setup Guide](./SETUP.md) for detailed step-by-step instructions and the [Tutorial](./TUTORIAL.md) for workflow examples.
 ```
 
 ## Current Status
