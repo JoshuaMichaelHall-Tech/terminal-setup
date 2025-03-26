@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Terminal Development Environment Installation Script
 # Author: Joshua Michael Hall
@@ -45,10 +45,12 @@ echo ""
 echo "This script will set up a complete terminal-based development"
 echo "environment with Neovim, tmux, and Zsh configurations."
 echo ""
+echo "IMPORTANT: This environment requires Zsh shell. Bash is not supported."
+echo ""
 echo "THE SCRIPT WILL BACK UP YOUR EXISTING CONFIGURATIONS BEFORE"
 echo "MAKING ANY CHANGES, BUT PLEASE REVIEW THE SCRIPT BEFORE RUNNING."
 echo ""
-read -p "Continue with installation? (y/n) " -n 1 -r
+read "REPLY?Continue with installation? (y/n) "
 echo ""
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     log_info "Installation aborted."
@@ -59,6 +61,20 @@ fi
 if [[ "$OSTYPE" != "darwin"* ]]; then
     log_error "This script is designed for MacOS only. Exiting."
     exit 1
+fi
+
+# Check if running in Zsh
+if [[ "$SHELL" != *"zsh"* ]]; then
+    log_warning "You are not currently using Zsh. This environment requires Zsh shell."
+    log_warning "The script will install Zsh, but you'll need to switch to it after installation."
+    log_warning "To switch to Zsh, run: chsh -s \$(which zsh)"
+    echo ""
+    read "REPLY?Continue anyway? (y/n) "
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Installation aborted."
+        exit 1
+    fi
 fi
 
 # Create timestamp for backups
@@ -125,13 +141,8 @@ if ! command -v brew &> /dev/null; then
     
     # Add Homebrew to PATH
     BREW_PATH="$(/opt/homebrew/bin/brew shellenv)"
-    if [[ "$SHELL" == *"zsh"* ]]; then
-        echo "eval \"$BREW_PATH\"" >> "$HOME/.zshrc"
-        eval "$BREW_PATH"
-    else
-        echo "eval \"$BREW_PATH\"" >> "$HOME/.bash_profile"
-        eval "$BREW_PATH"
-    fi
+    echo "eval \"$BREW_PATH\"" >> "$HOME/.zshrc"
+    eval "$BREW_PATH"
 else
     log_info "Homebrew already installed, updating..."
     brew update
@@ -159,6 +170,13 @@ if ! command -v zsh &> /dev/null; then
     brew install zsh
 fi
 
+# Make Zsh the default shell if it's not already
+if [[ "$SHELL" != *"zsh"* ]]; then
+    log_info "Setting Zsh as the default shell..."
+    chsh -s $(which zsh)
+    log_success "Zsh set as default shell. This will take effect after you log out and back in."
+fi
+
 # Install Oh My Zsh if not already installed
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     log_info "Installing Oh My Zsh..."
@@ -176,7 +194,58 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:
 
 # Configure Zsh
 log_info "Configuring Zsh..."
-cat > "$HOME/.zshrc" << 'EOL'
+cat > "$HOME/.zshrc" << 'EOL
+
+# Create Neovim undodir if it doesn't exist
+mkdir -p "$HOME/.vim/undodir"
+
+# Final steps
+log_success "Installation completed successfully!"
+
+# Install essential fonts
+log_info "Installing Nerd Fonts for proper icon display..."
+brew tap homebrew/cask-fonts
+brew install --cask font-jetbrains-mono-nerd-font
+brew install --cask font-hack-nerd-font
+
+# Install additional productivity tools
+log_info "Installing additional productivity tools..."
+brew install --cask rectangle
+brew install ranger
+brew install fzf
+$(brew --prefix)/opt/fzf/install --all
+
+echo ""
+echo "==================================================================="
+echo "                    NEXT STEPS AND NOTES                         "
+echo "==================================================================="
+echo ""
+echo "IMPORTANT: This environment requires Zsh shell!"
+echo ""
+if [[ "$SHELL" != *"zsh"* ]]; then
+    echo "1. Zsh has been installed and set as your default shell, but"
+    echo "   this will only take effect after you log out and back in."
+    echo "   To start using Zsh right now, run: zsh"
+    echo ""
+fi
+echo "2. Configure your terminal:"
+echo "   - iTerm2: Preferences → Profiles → Text → Font → Select 'JetBrainsMono Nerd Font'"
+echo "   - VS Code: "
+echo "     • Settings → Terminal → Default Profile → Select 'zsh'"
+echo "     • Settings → Terminal › Integrated: Font Family → 'JetBrainsMono Nerd Font'"
+echo ""
+echo "3. Run 'p10k configure' to set up the Powerlevel10k theme"
+echo ""
+echo "4. Open Neovim and let it install plugins (it may show errors on first run)"
+echo ""
+echo "5. In tmux, press Ctrl+a followed by 'I' to install tmux plugins"
+echo ""
+echo "6. Your old configurations are backed up in: $BACKUP_DIR"
+echo ""
+echo "For more detailed information, refer to the README.md file."
+echo ""
+echo "Enjoy your new terminal development environment!"
+echo ""'
 # Terminal Development Environment Zsh Configuration
 # Set up Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"
@@ -235,6 +304,12 @@ alias notes='tmux attach -t notes || tmux new -s notes "nvim -c VimwikiIndex"'
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+
+# Zsh-specific settings
+setopt AUTO_PUSHD        # Push directories onto the directory stack
+setopt PUSHD_IGNORE_DUPS # Don't push duplicates
+setopt PUSHD_SILENT      # Don't print the directory stack after pushd/popd
+setopt EXTENDED_GLOB     # Use extended globbing
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -522,50 +597,3 @@ return {
     end,
   },
 }
-EOL
-
-# Final steps
-log_success "Installation completed successfully!"
-
-# Install essential fonts
-log_info "Installing Nerd Fonts for proper icon display..."
-brew tap homebrew/cask-fonts
-brew install --cask font-jetbrains-mono-nerd-font
-brew install --cask font-hack-nerd-font
-
-# Install additional productivity tools
-log_info "Installing additional productivity tools..."
-brew install --cask rectangle
-brew install ranger
-brew install fzf
-$(brew --prefix)/opt/fzf/install --all
-echo ""
-echo "==================================================================="
-echo "                    NEXT STEPS AND NOTES                         "
-echo "==================================================================="
-echo ""
-echo "IMPORTANT: You must use Zsh to use this environment!"
-echo ""
-echo "1. Switch to Zsh if you're not already using it:"
-echo "   chsh -s $(which zsh)"
-echo ""
-echo "2. Configure your terminal:"
-echo "   - iTerm2: Preferences → Profiles → Text → Font → Select 'JetBrainsMono Nerd Font'"
-echo "   - VS Code: "
-echo "     • Settings → Terminal → Default Profile → Select 'zsh'"
-echo "     • Settings → Terminal › Integrated: Font Family → 'JetBrainsMono Nerd Font'"
-echo ""
-echo "3. Start a new Zsh terminal (don't source .zshrc from bash!)"
-echo ""
-echo "4. Run 'p10k configure' to set up the Powerlevel10k theme"
-echo ""
-echo "5. Open Neovim and let it install plugins (it may show errors on first run)"
-echo ""
-echo "6. In tmux, press Ctrl+a followed by 'I' to install tmux plugins"
-echo ""
-echo "7. Your old configurations are backed up in: $BACKUP_DIR"
-echo ""
-echo "For more detailed information, refer to the README.md file."
-echo ""
-echo "Enjoy your new terminal development environment!"
-echo ""

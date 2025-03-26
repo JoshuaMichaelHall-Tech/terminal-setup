@@ -1,6 +1,6 @@
-# Terminal-Based Development Workflow Tutorial
+# Terminal-Based Development Workflow Tutorial (Zsh Edition)
 
-This tutorial will guide you through practical workflows using the terminal-based development environment, focusing on software engineering tasks without relying on a mouse.
+This tutorial will guide you through practical workflows using the Zsh-based terminal development environment, focusing on software engineering tasks without relying on a mouse.
 
 ## Essential Keyboard Shortcuts
 
@@ -36,15 +36,15 @@ First, let's review the most essential shortcuts you'll use constantly:
 - `gd`: Go to definition (LSP)
 - `K`: Hover documentation (LSP)
 
-NOTE: There is a printable version in essential_shortcuts.md.
+NOTE: There is a printable version in Mouseless Essential Shortcuts.pdf and an editable version in mouseless_essential_shortcuts.md. I have also included zsh_essential_shortcuts.md and zsh_essential_shortcuts.pdf.
 
 ## Workflow 1: Daily Development Setup
 
-Let's create a development workflow that you can use each day.
+Let's create a development workflow that you can use each day with Zsh.
 
 ### 1. Starting Your Environment
 
-```bash
+```zsh
 # Start or resume a session
 tmux attach -t dev || tmux new -s dev
 ```
@@ -67,7 +67,7 @@ prefix + ,  # Rename it to "git"
 
 In your "project" window:
 
-```bash
+```zsh
 # Navigate to your project
 cd ~/projects/your-project
 
@@ -102,7 +102,7 @@ prefix + n  # Go to next window until you reach "server"
 ```
 
 Run your tests:
-```bash
+```zsh
 # For Ruby/Rails
 bundle exec rspec
 
@@ -122,7 +122,7 @@ prefix + n  # Go to next window until you reach "git"
 ```
 
 Perform Git operations:
-```bash
+```zsh
 # Check status
 git status
 
@@ -147,13 +147,13 @@ Let's set up a full-stack development environment with separate windows for fron
 
 ### 1. Create Your Session
 
-```bash
+```zsh
 tmux new -s fullstack
 ```
 
 ### 2. Set Up Backend Window
 
-```bash
+```zsh
 # Create and configure backend window
 mkdir -p ~/window-layouts
 cd ~/window-layouts
@@ -165,13 +165,13 @@ prefix + -  # Horizontal split in the right pane
 ```
 
 Left pane: Editor
-```bash
+```zsh
 cd ~/projects/backend
 nvim
 ```
 
 Top-right pane: Server
-```bash
+```zsh
 # Terminal shortcuts:
 prefix + ←/→/↑/↓  # Navigate to the top-right pane
 cd ~/projects/backend
@@ -179,7 +179,7 @@ rails server  # or your backend server command
 ```
 
 Bottom-right pane: Tests/Console
-```bash
+```zsh
 # Terminal shortcuts:
 prefix + ←/→/↑/↓  # Navigate to the bottom-right pane
 cd ~/projects/backend
@@ -188,7 +188,7 @@ rails console  # or equivalent for your stack
 
 ### 3. Set Up Frontend Window
 
-```bash
+```zsh
 # Create a new window
 # Terminal shortcuts:
 prefix + c
@@ -201,13 +201,13 @@ prefix + -  # Horizontal split in the right pane
 ```
 
 Left pane: Editor
-```bash
+```zsh
 cd ~/projects/frontend
 nvim
 ```
 
 Top-right pane: Development Server
-```bash
+```zsh
 # Terminal shortcuts:
 prefix + ←/→/↑/↓  # Navigate to the top-right pane
 cd ~/projects/frontend
@@ -215,7 +215,7 @@ npm start  # or your frontend server command
 ```
 
 Bottom-right pane: Tests/Terminal
-```bash
+```zsh
 # Terminal shortcuts:
 prefix + ←/→/↑/↓  # Navigate to the bottom-right pane
 cd ~/projects/frontend
@@ -224,7 +224,7 @@ npm test  # or other commands as needed
 
 ### 4. Create a Database Window
 
-```bash
+```zsh
 # Create a new window for database operations
 # Terminal shortcuts:
 prefix + c
@@ -247,7 +247,7 @@ Let's establish a Git-focused workflow for managing project tasks.
 
 In your project directory:
 
-```bash
+```zsh
 # Check out the main branch
 git checkout main
 git pull
@@ -285,7 +285,7 @@ From the Git status window:
 
 Back in the terminal:
 
-```bash
+```zsh
 # Create a pull request
 gh pr create --title "Implement new feature" --body "This PR adds..."
 
@@ -302,13 +302,13 @@ Let's set up a workflow for taking notes and documenting your projects.
 
 ### 1. Create a Notes Session
 
-```bash
+```zsh
 tmux new -s notes
 ```
 
 ### 2. Open Vimwiki
 
-```bash
+```zsh
 nvim -c VimwikiIndex
 ```
 
@@ -354,21 +354,21 @@ Let's create a workflow for working on remote servers.
 
 ### 1. Connect to Remote Server
 
-```bash
+```zsh
 # SSH into the server
 ssh user@server.example.com
 ```
 
 ### 2. Start a tmux Session on the Remote Server
 
-```bash
+```zsh
 # Start a new session or attach to existing
 tmux new -s remote || tmux attach -t remote
 ```
 
 ### 3. Set Up Your Environment on the Remote Server
 
-```bash
+```zsh
 # Clone your dotfiles if you have them
 git clone https://github.com/yourusername/dotfiles.git ~/dotfiles
 
@@ -397,7 +397,7 @@ Let's set up a workflow for data analysis using Python in the terminal.
 
 ### 1. Create a Data Analysis Session
 
-```bash
+```zsh
 tmux new -s data-analysis
 ```
 
@@ -410,13 +410,13 @@ prefix + |  # Vertical split
 ```
 
 Left pane: Editor for Python scripts
-```bash
+```zsh
 cd ~/projects/data-analysis
 nvim analysis.py
 ```
 
 Right pane: Python REPL or IPython
-```bash
+```zsh
 # Terminal shortcuts
 prefix + →  # Navigate to right pane
 cd ~/projects/data-analysis
@@ -439,7 +439,7 @@ Use your terminal environment to manage your time effectively:
 
 ### 1. Start Your Day
 
-```bash
+```zsh
 # Create a focused workspace
 tmux new -s workday
 
@@ -462,7 +462,7 @@ prefix + ,  # Rename to "tasks"
 ```
 
 Use Taskwarrior to manage tasks:
-```bash
+```zsh
 # Add tasks for today
 task add "Complete PR review" due:today priority:H
 task add "Refactor authentication module" due:today priority:M
@@ -481,7 +481,7 @@ prefix + ,  # Rename to "pomodoro"
 ```
 
 Run a simple Pomodoro timer:
-```bash
+```zsh
 # 25-minute work session
 timer 25m "Time to take a break!"
 ```
@@ -490,22 +490,18 @@ timer 25m "Time to take a break!"
 
 1. **Learn key motions incrementally**. Don't try to memorize everything at once.
 
-2. **Create aliases for common operations**:
-   ```bash
+2. **Create Zsh aliases for common operations**:
+   ```zsh
    # Add to your .zshrc
    alias dev='tmux attach -t dev || tmux new -s dev'
    alias gc='git commit -m'
    alias gst='git status'
    ```
 
-3. **Use mnemonics to remember commands**:
-   - `<leader>ff` = "find files"
-   - `<leader>gs` = "git status"
-
-4. **Create custom tmux layouts**:
-   ```bash
+3. **Use Zsh functions for complex workflows**:
+   ```zsh
    # Add to your .zshrc
-   webdev() {
+   function webdev() {
      tmux new-session -s webdev -n editor -d
      tmux split-window -h -t webdev:editor
      tmux split-window -v -t webdev:editor.2
@@ -516,11 +512,25 @@ timer 25m "Time to take a break!"
    }
    ```
 
-5. **Learn to touch type** if you haven't already. Your efficiency will skyrocket.
+4. **Use mnemonics to remember commands**:
+   - `<leader>ff` = "find files"
+   - `<leader>gs` = "git status"
 
-6. **Document your workflows** in your wiki for future reference.
+5. **Leverage Zsh's powerful completions**:
+   ```zsh
+   # Add to your .zshrc
+   # Enable enhanced completions
+   autoload -U compinit && compinit
+   
+   # Case-insensitive completion
+   zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+   ```
 
-7. **Use clipboard integration** with tmux and Neovim:
+6. **Learn to touch type** if you haven't already. Your efficiency will skyrocket.
+
+7. **Document your workflows** in your wiki for future reference.
+
+8. **Use clipboard integration** with tmux and Neovim:
    ```
    # In .tmux.conf
    set -g @plugin 'tmux-plugins/tmux-yank'
@@ -529,8 +539,104 @@ timer 25m "Time to take a break!"
    set clipboard+=unnamedplus
    ```
 
+## Zsh-Specific Power Features
+
+Here are some Zsh-specific features that will boost your productivity:
+
+### 1. Directory Navigation
+
+Zsh allows you to navigate directories without using `cd`:
+
+```zsh
+# Instead of
+cd /path/to/directory
+
+# Just type the path
+/path/to/directory
+```
+
+### 2. Global Aliases
+
+Create aliases that work anywhere in a command:
+
+```zsh
+# Add to your .zshrc
+alias -g G='| grep'
+alias -g L='| less'
+alias -g H='| head'
+alias -g T='| tail'
+
+# Usage examples:
+ps aux G ruby    # grep for ruby processes
+cat file.log L   # pipe to less
+```
+
+### 3. Suffix Aliases
+
+Open files with specific extensions using their associated programs:
+
+```zsh
+# Add to your .zshrc
+alias -s rb=nvim
+alias -s py=nvim
+alias -s js=nvim
+alias -s json=nvim
+alias -s md=nvim
+alias -s txt=nvim
+
+# Usage: just type the filename to open it
+example.rb    # Opens example.rb in Neovim
+```
+
+### 4. Directory History
+
+Navigate quickly through your recently visited directories:
+
+```zsh
+# Add to your .zshrc
+setopt AUTO_PUSHD      # Push directories onto directory stack
+setopt PUSHD_IGNORE_DUPS  # Don't push duplicates
+setopt PUSHD_SILENT    # Don't print directory stack
+
+# Navigate directory history
+cd -<TAB>   # Shows directory history with numbers
+cd -2       # Go to the second most recent directory
+```
+
+### 5. Extended Globbing
+
+Use powerful pattern matching in Zsh:
+
+```zsh
+# Add to your .zshrc
+setopt EXTENDED_GLOB
+
+# Examples:
+ls -l *(.)     # List only regular files
+rm -rf ^*.rb   # Remove everything except Ruby files
+ls -l **/*(.) # List all regular files in all subdirectories
+```
+
 ## Conclusion
 
-These workflows should help you become more efficient with your terminal-based development environment. Remember that mastery takes time—focus on learning a few new shortcuts each week rather than trying to memorize everything at once.
+These workflows should help you become more efficient with your Zsh-based terminal development environment. Remember that mastery takes time—focus on learning a few new shortcuts each week rather than trying to memorize everything at once.
 
-As you become more comfortable with these tools, you'll develop your own workflows tailored to your specific needs and preferences.
+As you become more comfortable with these tools, you'll develop your own workflows tailored to your specific needs and preferences. The most powerful aspect of a Zsh-based terminal environment is how customizable it is - you can continue to refine your setup over time.
+
+## Additional Resources
+
+### Zsh Documentation and Learning
+- Oh My Zsh documentation: https://github.com/ohmyzsh/ohmyzsh/wiki
+- Zsh Guide: http://zsh.sourceforge.net/Guide/
+- The Zsh Manual: http://zsh.sourceforge.net/Doc/
+
+### Neovim Resources
+- Neovim documentation: https://neovim.io/doc/
+- Learn Vim progressively: https://github.com/iggredible/Learn-Vim
+- Practical Vim (book by Drew Neil)
+
+### tmux Resources
+- tmux cheatsheet: https://tmuxcheatsheet.com/
+- tmux guide: https://pragprog.com/titles/bhtmux2/tmux-2/
+
+Remember, the goal isn't to learn everything at once, but to incrementally build your skills and workflows. Start with the basics, add new techniques as you get comfortable, and soon you'll be navigating your development environment with ease and speed.

@@ -1,15 +1,18 @@
-# Terminal Development Environment
+# Terminal Development Environment (Zsh-Only)
 
 > **⚠️ DISCLAIMER: This is a work in progress. I am still working out bugs and refining the configuration. Use at your own risk and please report any issues you encounter.**
 
-A highly customized terminal-based development environment using Neovim, tmux, and command-line tools optimized for software engineering workflows.
+A highly customized terminal-based development environment using Zsh, Neovim, tmux, and command-line tools optimized for software engineering workflows.
 
 ![Version](https://img.shields.io/badge/version-0.1.0--alpha-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Shell](https://img.shields.io/badge/shell-Zsh%20Only-orange)
 
 ## Overview
 
 This repository contains my terminal-based development environment configuration, designed to maximize productivity through a keyboard-driven workflow. By leveraging terminal-based tools, this setup minimizes distractions and resource usage while providing a consistent environment across all my machines.
+
+**IMPORTANT**: This environment is designed exclusively for Zsh shell. Bash is NOT supported.
 
 ## Key Features
 
@@ -18,13 +21,14 @@ This repository contains my terminal-based development environment configuration
 - **Resource Efficiency**: Minimal CPU and memory usage compared to GUI editors
 - **Consistent Experience**: Same environment locally and on remote servers
 - **Version-Controlled**: Track all configuration changes with Git
+- **Zsh-Powered**: Takes full advantage of Zsh's powerful features
 
 ## Components
 
 ### Core Tools
+- **Zsh**: Shell with Oh My Zsh and custom configuration
 - **Neovim**: Text editor with full LSP support and custom keybindings
 - **tmux**: Terminal multiplexer for session management
-- **Zsh**: Shell with custom configuration and aliases
 
 ### Plugins & Extensions
 - **Lua-based Neovim config**: Modern plugin system with Lazy.nvim
@@ -32,6 +36,7 @@ This repository contains my terminal-based development environment configuration
 - **Telescope**: Fuzzy finder for files and text
 - **Treesitter**: Advanced syntax highlighting
 - **Git Integration**: Fugitive and other Git tools
+- **Zsh Plugins**: Auto-suggestions, syntax highlighting, and more
 
 ## Getting Started
 
@@ -39,7 +44,7 @@ This repository contains my terminal-based development environment configuration
 
 The automated installation script will back up your existing configurations, set up a clean environment, and install all required components.
 
-```bash
+```zsh
 # Clone the repository
 git clone https://github.com/JoshuaMichaelHall-Tech/terminal-setup.git
 cd terminal-setup
@@ -55,10 +60,10 @@ chmod +x install.sh
 
 After running the installation script, you'll need to:
 
-1. **Use Zsh:** This environment is designed specifically for Zsh, not Bash.
+1. **Use Zsh:** This environment is designed exclusively for Zsh, not Bash.
    - If you're not already using Zsh: `chsh -s $(which zsh)`
    - If using VS Code: Go to Settings → Terminal → Default Profile → Select 'zsh'
-   - Start a new terminal window (don't source `.zshrc` from Bash!)
+   - Restart your terminal session to start using Zsh
 
 2. **Configure Nerd Fonts:** The environment uses special fonts for icons and symbols.
    - In iTerm2: Preferences → Profiles → Text → Font → Select 'JetBrainsMono Nerd Font'
@@ -93,7 +98,7 @@ This project is actively being developed and refined. Current focus areas:
 - [ ] Improving tmux session management
 - [ ] Optimizing keybindings across tools
 - [ ] Creating language-specific configurations
-- [ ] Documenting common workflows
+- [ ] Enhancing Zsh customizations
 
 ### Known Issues
 
@@ -102,6 +107,7 @@ This project is actively being developed and refined. Current focus areas:
   - For example, use `rubylsp` (not `ruby_lsp`) and `tsserver` (for TypeScript).
 - **Font Rendering**: Some terminals may have issues displaying Nerd Font icons. Make sure you've properly configured your terminal to use the JetBrainsMono Nerd Font.
 - **Language Server Installation**: Some language servers may require additional dependencies like Node.js or npm. Check the Mason UI (`:Mason` in Neovim) for details.
+- **Zsh Configuration**: If you have existing Zsh customizations, you may need to merge them with this setup's configuration.
 
 ## Screenshots
 
@@ -113,6 +119,7 @@ This configuration draws inspiration from:
 - ThePrimeagen's development environment
 - Vim and Neovim communities
 - Ruby/Rails developers using terminal-based workflows
+- Zsh power users
 
 ## Contributing
 
