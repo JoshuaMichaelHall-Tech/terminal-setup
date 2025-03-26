@@ -36,6 +36,8 @@ First, let's review the most essential shortcuts you'll use constantly:
 - `gd`: Go to definition (LSP)
 - `K`: Hover documentation (LSP)
 
+NOTE: There is a printable version in essential_shortcuts.md.
+
 ## Workflow 1: Daily Development Setup
 
 Let's create a development workflow that you can use each day.
