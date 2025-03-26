@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Fix LSP Server Configuration Script
 # This script resolves common issues with Mason and LSP configuration in Neovim
@@ -37,11 +37,25 @@ echo ""
 echo "This script will fix common issues with Mason LSP configuration."
 echo "It will NOT delete your existing setup, but will correct errors."
 echo ""
-read -p "Continue with fixing your configuration? (y/n) " -n 1 -r
+read "REPLY?Continue with fixing your configuration? (y/n) "
 echo ""
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     log_info "Script cancelled."
     exit 1
+fi
+
+# Check if running in Zsh
+if [[ "$SHELL" != *"zsh"* ]]; then
+    log_warning "You are not currently using Zsh. This environment requires Zsh shell."
+    log_warning "To switch to Zsh permanently, run: chsh -s $(which zsh)"
+    log_warning "To use Zsh just for this script, exit and run: zsh ./fix-lsp-servers.zsh"
+    echo ""
+    read "REPLY?Continue anyway? (y/n) "
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Script cancelled."
+        exit 1
+    fi
 fi
 
 # Check for Neovim configuration directory
@@ -137,7 +151,7 @@ EOL
 fi
 
 # Install Nerd Fonts if needed
-read -p "Would you like to install Nerd Fonts for proper icon display? (y/n) " -n 1 -r
+read "REPLY?Would you like to install Nerd Fonts for proper icon display? (y/n) "
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     log_info "Installing Nerd Fonts..."
