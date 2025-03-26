@@ -430,14 +430,14 @@ return {
       require('mason-lspconfig').setup({
         -- Note: Server names might change in future lspconfig versions
         -- Check https://github.com/neovim/nvim-lspconfig for the latest names
-        ensure_installed = { 'lua_ls', 'ruby_lsp', 'pyright', 'tsserver' }
+        ensure_installed = { 'lua_ls', 'rubylsp', 'pyright', 'tsserver' }
       })
       
       local lspconfig = require('lspconfig')
       
       -- Basic LSP setup for the languages you use
-      lspconfig.lua_ls.setup{}
-      lspconfig.ruby_lsp.setup{}  -- For Ruby development
+      lspconfig.lua_ls.setup{}    -- For Lua development
+      lspconfig.rubylsp.setup{}   -- For Ruby development
       lspconfig.pyright.setup{}   -- For Python development
       lspconfig.tsserver.setup{}  -- For TypeScript/JavaScript development
       
