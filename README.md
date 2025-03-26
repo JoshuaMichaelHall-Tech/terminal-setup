@@ -1,63 +1,78 @@
 # Terminal Development Environment
 
-A fully customized development environment using Neovim, tmux, and command-line tools optimized for software engineering and data analysis workflows.
+> **⚠️ DISCLAIMER: This is a work in progress. I am still working out bugs and refining the configuration. Use at your own risk and please report any issues you encounter.**
+
+A highly customized terminal-based development environment using Neovim, tmux, and command-line tools optimized for software engineering workflows.
+
+![Version](https://img.shields.io/badge/version-0.1.0--alpha-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Overview
 
-This repository contains my complete terminal-based development environment configuration, designed for maximum productivity and efficiency. By leveraging terminal-based tools, this setup minimizes context switching and resource usage while maximizing customization.
+This repository contains my terminal-based development environment configuration, designed to maximize productivity through a keyboard-driven workflow. By leveraging terminal-based tools, this setup minimizes distractions and resource usage while providing a consistent environment across all my machines.
+
+## Key Features
+
+- **Mouse-Free Workflow**: Complete development environment navigable entirely from the keyboard
+- **Modular Configuration**: Easily adaptable to different projects and languages
+- **Resource Efficiency**: Minimal CPU and memory usage compared to GUI editors
+- **Consistent Experience**: Same environment locally and on remote servers
+- **Version-Controlled**: Track all configuration changes with Git
 
 ## Components
 
-### Neovim Configuration
+### Core Tools
+- **Neovim**: Text editor with full LSP support and custom keybindings
+- **tmux**: Terminal multiplexer for session management
+- **Zsh**: Shell with custom configuration and aliases
 
-- Full Lua-based configuration
-- LSP integration for code intelligence
-- Treesitter for advanced syntax highlighting
-- Telescope for fuzzy finding
-- Custom keybindings for efficient editing
-- Git integration with Fugitive
+### Plugins & Extensions
+- **Lua-based Neovim config**: Modern plugin system with Lazy.nvim
+- **LSP Integration**: Code intelligence for multiple languages
+- **Telescope**: Fuzzy finder for files and text
+- **Treesitter**: Advanced syntax highlighting
+- **Git Integration**: Fugitive and other Git tools
 
-### tmux Setup
+## Getting Started
 
-- Session management
-- Window and pane layouts
-- Custom status bar
-- Vim-style navigation
-- Session persistence
+Please see the [Setup Guide](./SETUP.md) for detailed installation instructions and the [Tutorial](./TUTORIAL.md) for workflow examples.
 
-### Shell Configuration
-
-- Zsh with custom prompt
-- Aliases for common operations
-- Functions for workflow automation
-- Integration with fzf, ripgrep, and fd
-
-## Installation
+### Quick Start
 
 ```bash
 # Clone the repository
 git clone https://github.com/JoshuaMichaelHall-Tech/terminal-setup.git
 cd terminal-setup
 
-# Run the installation script
+# Run the installation script (coming soon)
 ./install.sh
+```
 
-Key Features
+## Current Status
 
-Consistent environment across machines
-Keyboard-driven workflow
-Minimal resource usage
-Full customization
-Version-controlled configuration
+This project is actively being developed and refined. Current focus areas:
 
-Screenshots
+- [ ] Streamlining Neovim LSP configuration
+- [ ] Improving tmux session management
+- [ ] Optimizing keybindings across tools
+- [ ] Creating language-specific configurations
+- [ ] Documenting common workflows
+
+## Screenshots
+
 [Coming soon]
-Resources
 
-Neovim Documentation - https://neovim.io/doc/
-tmux Manual - https://man.openbsd.org/tmux
-My blog post on terminal-based development - https://joshuamichaelhall.com/blog/terminal-based-development-environment
+## Inspiration
+
+This configuration draws inspiration from:
+- ThePrimeagen's development environment
+- Vim and Neovim communities
+- Ruby/Rails developers using terminal-based workflows
+
+## Contributing
+
+While this is primarily my personal configuration, suggestions and improvements are welcome! Feel free to open an issue or pull request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
