@@ -102,12 +102,36 @@ This project is actively being developed and refined. Current focus areas:
 
 ### Known Issues
 
-- **LSP Server Names**: Mason-lspconfig uses specific server names that can be confusing. For current server names, run `:Mason` to see available packages and refer to the [server mapping documentation](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md). 
+- **LSP Server Names**: Mason-lspconfig uses specific server names that might change over time. For current server names, run `:Mason` to see available packages and refer to the [server mapping documentation](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md). 
   - If you receive the error `Server "X" is not a valid entry in ensure_installed`, you need to use the correct server name in your setup.
-  - For example, use `rubylsp` (not `ruby_lsp`) and `tsserver` (for TypeScript).
+  - The configuration now uses up-to-date server names like `ruby_lsp` (instead of `ruby_ls`) and `ts_ls` (instead of `tsserver`).
+  - Server names may continue to change in future versions, so check the documentation if you encounter issues.
+
 - **Font Rendering**: Some terminals may have issues displaying Nerd Font icons. Make sure you've properly configured your terminal to use the JetBrainsMono Nerd Font.
+
 - **Language Server Installation**: Some language servers may require additional dependencies like Node.js or npm. Check the Mason UI (`:Mason` in Neovim) for details.
+
 - **Zsh Configuration**: If you have existing Zsh customizations, you may need to merge them with this setup's configuration.
+
+## Maintenance
+
+### Keeping LSP Configuration Up-to-date
+
+LSP server names and configurations can change between versions. To update your LSP configuration:
+
+1. Check the latest server names in Mason's documentation:
+   ```
+   :help mason-lspconfig-server-map
+   ```
+   
+2. Or check the online documentation at [mason-lspconfig server mapping](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md)
+
+3. Update your configuration in `~/.config/nvim/lua/plugins.lua` if needed
+
+4. Install or update servers with:
+   ```
+   :Mason
+   ```
 
 ## Screenshots
 
