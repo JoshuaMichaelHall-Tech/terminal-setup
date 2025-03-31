@@ -1,21 +1,26 @@
-# Terminal Development Environment Shortcut Master Sheet
+# Terminal Development Environment: Comprehensive Shortcuts Guide
 
-> A comprehensive reference for keyboard shortcuts and commands for the full-stack terminal development environment using Zsh, Neovim, tmux, and Git.
+> A comprehensive reference for your terminal-centric workflow using Zsh, Neovim, tmux, and related tools
 
 ## Table of Contents
 - [System Navigation](#system-navigation)
 - [Terminal (iTerm2)](#terminal-iterm2)
+- [Rectangle Window Management](#rectangle-window-management)
 - [Zsh Navigation](#zsh-navigation)
 - [Zsh Command Editing](#zsh-command-editing)
 - [Zsh Command History](#zsh-command-history)
 - [Zsh File Operations](#zsh-file-operations)
+- [Zsh File Globbing & Pattern Matching](#zsh-file-globbing--pattern-matching)
+- [Zsh Advanced Features](#zsh-advanced-features)
 - [tmux](#tmux)
+- [tmux Commands](#tmux-commands)
 - [Neovim Basics](#neovim-basics)
 - [Neovim File Navigation](#neovim-file-navigation)
 - [Neovim Editing](#neovim-editing)
 - [Neovim LSP Integration](#neovim-lsp-integration)
 - [Git Operations](#git-operations)
 - [Development Workflows](#development-workflows)
+- [Productivity Tips](#productivity-tips)
 
 ## System Navigation
 | Shortcut | Description |
@@ -34,7 +39,17 @@
 | `Cmd + Shift + 5` | Screenshot options |
 | `Ctrl + Up/Down` | Mission Control/App Exposé |
 | `Ctrl + Left/Right` | Switch between spaces |
-| `F11` | Show desktop |
+
+## Terminal (iTerm2)
+| Shortcut | Description |
+|----------|-------------|
+| `Cmd + T` | New tab |
+| `Cmd + D` | Split vertically |
+| `Cmd + Shift + D` | Split horizontally |
+| `Cmd + Opt + ←/→/↑/↓` | Navigate between panes |
+| `Cmd + [number]` | Go to tab [number] |
+| `Cmd + W` | Close current tab/pane |
+| `Cmd + Shift + [/]` | Go to previous/next tab |
 
 ## Rectangle Window Management
 | Shortcut | Description |
@@ -53,21 +68,7 @@
 | `Ctrl + Opt + +` | Make larger |
 | `Ctrl + Opt + -` | Make smaller |
 | `Ctrl + Opt + /` | Next display |
-| `Ctrl + Opt + Shift + /` | Previous display |
-| `Ctrl + Opt + Shift + ←` | Move to left display |
-| `Ctrl + Opt + Shift + →` | Move to right display |
 | `Ctrl + Opt + Backspace` | Restore to original size/position |
-
-## Terminal (iTerm2)
-| Shortcut | Description |
-|----------|-------------|
-| `Cmd + T` | New tab |
-| `Cmd + D` | Split vertically |
-| `Cmd + Shift + D` | Split horizontally |
-| `Cmd + Opt + ←/→/↑/↓` | Navigate between panes |
-| `Cmd + [number]` | Go to tab [number] |
-| `Cmd + W` | Close current tab/pane |
-| `Cmd + Shift + [/]` | Go to previous/next tab |
 
 ## Zsh Navigation
 | Command | Description |
@@ -79,6 +80,9 @@
 | `...` | Go up two directories (alias) |
 | `....` | Go up three directories (alias) |
 | `/path/to/directory` | Navigate to directory without typing 'cd' |
+| `dirs -v` | List directory stack with numbers |
+| `pushd directory` | Change to directory and add to stack |
+| `popd` | Pop top directory from stack and change to it |
 
 ## Zsh Command Editing
 | Shortcut | Description |
@@ -90,9 +94,12 @@
 | `Ctrl + W` | Delete word before cursor |
 | `Alt + F` | Move forward one word |
 | `Alt + B` | Move backward one word |
+| `Alt + D` | Delete word after cursor |
+| `Ctrl + Y` | Paste previously cut text |
+| `Ctrl + _` | Undo last edit |
+| `Ctrl + L` | Clear screen |
 | `Ctrl + R` | Search command history |
 | `Ctrl + G` | Escape from history search |
-| `Ctrl + L` | Clear screen |
 
 ## Zsh Command History
 | Command | Description |
@@ -104,8 +111,22 @@
 | `!abc:p` | Print most recent command starting with 'abc' (without running) |
 | `fc` | Open command history in editor |
 | `history` | Show command history |
+| `^old^new` | Replace first occurrence of 'old' with 'new' in previous command |
+| `!!:gs/old/new` | Replace all occurrences of 'old' with 'new' in previous command |
 
 ## Zsh File Operations
+| Command | Description |
+|---------|-------------|
+| `ls -l` | List files in long format |
+| `ll` | List in long format (alias for `ls -la`) |
+| `la` | List all including hidden files (alias for `ls -a`) |
+| `mkdir -p dir1/dir2/dir3` | Create nested directories |
+| `cp -r source destination` | Copy directories recursively |
+| `rm -rf directory` | Remove directory and contents |
+| `find . -name "*.rb"` | Find all Ruby files in current directory |
+| `grep -r "text" .` | Recursively search for text |
+
+## Zsh File Globbing & Pattern Matching
 | Command | Description |
 |---------|-------------|
 | `ls *(.)` | List only regular files |
@@ -113,9 +134,34 @@
 | `ls -l *(.m-7)` | List files modified in the last week |
 | `ls *.txt~file.txt` | List all txt files except file.txt |
 | `ls **/*.rb` | Recursively list all Ruby files |
-| `ll` | List in long format (alias for `ls -la`) |
-| `la` | List all including hidden files (alias for `ls -a`) |
-| `mkdir -p dir1/dir2/dir3` | Create nested directories |
+| `ls -l ^*.rb` | List everything except Ruby files |
+| `ls -l **/*(.)` | List all regular files in all subdirectories |
+| `rm -rf *(/)` | Remove all subdirectories |
+| `ls -l *(.L0)` | List empty files |
+
+## Zsh Advanced Features
+| Feature | Description |
+|---------|-------------|
+| **Suffix Aliases** | |
+| `example.rb` | Open with Neovim (with alias in .zshrc) |
+| `example.py` | Open with Neovim (with alias in .zshrc) |
+| `example.js` | Open with Neovim (with alias in .zshrc) |
+| **Global Aliases** | |
+| `command G pattern` | Pipe output to grep (with alias in .zshrc) |
+| `command L` | Pipe output to less (with alias in .zshrc) |
+| `command H` | Pipe output to head (with alias in .zshrc) |
+| `command T` | Pipe output to tail (with alias in .zshrc) |
+| **Process Management** | |
+| `Ctrl+Z` | Suspend current process |
+| `fg` | Resume suspended process in foreground |
+| `bg` | Resume suspended process in background |
+| `jobs` | List all jobs |
+| `kill %1` | Kill job number 1 |
+| **Redirection & Pipes** | |
+| `command > file` | Redirect stdout to file (overwrite) |
+| `command >> file` | Redirect stdout to file (append) |
+| `command 2> file` | Redirect stderr to file |
+| `command &> file` | Redirect both stdout and stderr to file |
 
 ## tmux
 > Note: The prefix key is set to `Ctrl + a`
@@ -139,7 +185,7 @@
 | `prefix + r` | Reload configuration |
 | `prefix + I` | Install plugins |
 
-### tmux Commands
+## tmux Commands
 | Command | Description |
 |---------|-------------|
 | `ta [name]` | Attach to session [name] (alias) |
@@ -148,6 +194,7 @@
 | `tk [name]` | Kill session [name] (alias) |
 | `dev` | Start or resume dev session (alias) |
 | `notes` | Start or resume notes session (alias) |
+| `tmux new -s fullstack` | Create a new full-stack development session |
 
 ## Neovim Basics
 > Note: The leader key is set to Space
@@ -245,21 +292,51 @@
 | `<leader>wn` | Create new Vimwiki page |
 | `<leader>w<leader>i` | Create daily journal in Vimwiki |
 
-## Zsh Advanced Features
-| Feature | Description |
-|---------|-------------|
-| `setopt AUTO_PUSHD` | Push directories onto directory stack |
-| `setopt PUSHD_IGNORE_DUPS` | Don't push duplicates |
-| `setopt PUSHD_SILENT` | Don't print the directory stack |
-| `setopt EXTENDED_GLOB` | Use extended globbing |
-| `alias -g G='| grep'` | Global alias for piping to grep |
-| `alias -s rb=nvim` | Suffix alias to open .rb files with nvim |
+## Productivity Tips
 
----
+1. **Create Zsh aliases for common operations**:
+   ```zsh
+   # Add to your .zshrc
+   alias dev='tmux attach -t dev || tmux new -s dev'
+   alias gc='git commit -m'
+   alias gst='git status'
+   ```
 
-This shortcut sheet covers the essential keyboard shortcuts and commands for the terminal development environment. For more detailed information, refer to the documentation and tutorial files in the repository.
+2. **Use Zsh functions for complex workflows**:
+   ```zsh
+   # Add to your .zshrc
+   function webdev() {
+     tmux new-session -s webdev -n editor -d
+     tmux split-window -h -t webdev:editor
+     tmux split-window -v -t webdev:editor.2
+     tmux new-window -n server -t webdev
+     tmux send-keys -t webdev:server 'cd ~/projects/current && npm start' C-m
+     tmux select-window -t webdev:editor
+     tmux attach -t webdev
+   }
+   ```
 
-For custom keybindings and configurations, check your personal:
-- `~/.zshrc` for Zsh configuration
-- `~/.tmux.conf` for tmux configuration
-- `~/.config/nvim/init.lua` for Neovim configuration
+3. **Zsh Configuration**:
+   ```zsh
+   # Add to your .zshrc
+   setopt AUTO_PUSHD          # Push directories onto directory stack
+   setopt PUSHD_IGNORE_DUPS   # Don't push duplicates
+   setopt PUSHD_SILENT        # Don't print directory stack
+   setopt EXTENDED_GLOB       # Use extended globbing
+   setopt AUTO_CD             # Type directory name to cd
+   ```
+
+4. **Useful Functions**:
+   ```zsh
+   # Create and change to directory in one command
+   mcd() {
+     mkdir -p $1 && cd $1
+   }
+   
+   # Find and open file with Neovim
+   nvimf() {
+     nvim $(find . -name "*$1*" | fzf)
+   }
+   ```
+
+Remember, mastery takes time—focus on learning a few new shortcuts each week rather than trying to memorize everything at once.
