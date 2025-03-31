@@ -20,6 +20,8 @@
 - [Neovim LSP Integration](#neovim-lsp-integration)
 - [Git Operations](#git-operations)
 - [Development Workflows](#development-workflows)
+- [Notes System](#notes-system)
+- [Custom Functions](#custom-functions)
 - [Productivity Tips](#productivity-tips)
 
 ## System Navigation
@@ -142,15 +144,12 @@
 ## Zsh Advanced Features
 | Feature | Description |
 |---------|-------------|
-| **Suffix Aliases** | |
-| `example.rb` | Open with Neovim (with alias in .zshrc) |
-| `example.py` | Open with Neovim (with alias in .zshrc) |
-| `example.js` | Open with Neovim (with alias in .zshrc) |
-| **Global Aliases** | |
-| `command G pattern` | Pipe output to grep (with alias in .zshrc) |
-| `command L` | Pipe output to less (with alias in .zshrc) |
-| `command H` | Pipe output to head (with alias in .zshrc) |
-| `command T` | Pipe output to tail (with alias in .zshrc) |
+| **Zsh Options** | |
+| `setopt AUTO_PUSHD` | Automatically pushd directories onto stack |
+| `setopt PUSHD_IGNORE_DUPS` | Don't push duplicates onto directory stack |
+| `setopt PUSHD_SILENT` | Don't print directory stack after pushd/popd |
+| `setopt EXTENDED_GLOB` | Enable advanced pattern matching |
+| `setopt AUTO_CD` | Type directory name to cd |
 | **Process Management** | |
 | `Ctrl+Z` | Suspend current process |
 | `fg` | Resume suspended process in foreground |
@@ -184,6 +183,9 @@
 | `prefix + w` | List windows |
 | `prefix + r` | Reload configuration |
 | `prefix + I` | Install plugins |
+| `prefix + Ctrl+←/→/↑/↓` | Resize pane |
+| `prefix + x` | Kill pane |
+| `prefix + &` | Kill window |
 
 ## tmux Commands
 | Command | Description |
@@ -194,7 +196,12 @@
 | `tk [name]` | Kill session [name] (alias) |
 | `dev` | Start or resume dev session (alias) |
 | `notes` | Start or resume notes session (alias) |
-| `tmux new -s fullstack` | Create a new full-stack development session |
+| `wk dev` | Start unified development session (function) |
+| `wk notes` | Start unified notes session (function) |
+| `tmux new -s [name]` | Create a new session named [name] |
+| `tmux list-sessions` | List all tmux sessions |
+| `tmux kill-session -t [name]` | Kill session named [name] |
+| `tmux kill-server` | Kill all tmux sessions |
 
 ## Neovim Basics
 > Note: The leader key is set to Space
@@ -206,6 +213,8 @@
 | `vim` | Open Neovim (alias) |
 | `<leader>w` | Save file |
 | `<leader>q` | Quit |
+| `<leader>h` | Clear search highlighting |
+| `<leader>?` | Show common key mappings |
 | `:w` | Save file |
 | `:q` | Quit |
 | `:wq` | Save and quit |
@@ -216,6 +225,7 @@
 | `Esc` or `Ctrl + [` | Return to normal mode |
 | `v` | Enter visual mode |
 | `V` | Enter visual line mode |
+| `Ctrl + v` | Enter visual block mode |
 
 ## Neovim File Navigation
 | Shortcut | Description |
@@ -264,6 +274,7 @@
 | `<leader>ca` | Code action |
 | `[d` | Go to previous diagnostic |
 | `]d` | Go to next diagnostic |
+| `<leader>f` | Format code |
 | `:LspInfo` | Show LSP information |
 | `:Mason` | Open Mason package manager |
 | `:MasonUpdate` | Update Mason packages |
@@ -282,61 +293,126 @@
 | `git checkout -b feature/name` | Create and switch to new branch |
 | `git merge branch_name` | Merge branch into current branch |
 | `git branch -d branch_name` | Delete branch |
+| `git log` | Show commit history |
+| `git diff` | Show changes |
+| `git reset --hard HEAD` | Discard all changes since last commit |
+| `git stash` | Stash changes |
+| `git stash pop` | Apply stashed changes |
 
 ## Development Workflows
 | Command | Description |
 |---------|-------------|
-| `dev` | Start or resume main development session |
-| `notes` | Start or resume notes session |
-| `tmux new -s fullstack` | Create a new full-stack development session |
-| `<leader>wn` | Create new Vimwiki page |
-| `<leader>w<leader>i` | Create daily journal in Vimwiki |
+| `wk dev` | Start or resume development workflow |
+| `wk notes` | Start or resume notes workflow |
+| `dev` | Start or resume dev session (alias) |
+| `notes` | Start or resume notes session (alias) |
+| `nvimf [pattern]` | Find and edit file with pattern using Neovim and FZF |
+
+## Notes System
+| Command | Description |
+|---------|-------------|
+| `:Daily` | Create or open today's daily note |
+| `:Project` | Create or open a project note |
+| `:Learning` | Create or open a learning note |
+| `:Notes` | Change to notes directory |
+| `:NotesEdit` | Open notes directory in editor |
+| `:NotesFind` | Find notes with FZF |
+| `:NotesGrep` | Search for text within notes |
+| `:RecentNotes` | Show recently modified notes |
+| `<leader>fn` | Find notes files |
+| `<leader>fg` | Search within notes |
+| `<leader>fr` | Show recently modified notes |
+| `<leader>fd` | Create/edit today's daily note |
+| `<leader>fp` | Create/edit a project note |
+| `<leader>fl` | Create/edit a learning note |
+
+## Custom Functions
+| Function | Description |
+|----------|-------------|
+| `mcd [dir]` | Create directory and change to it |
+| `nvimf [pattern]` | Find and open file with Neovim |
+| `check-functions` | Verify that key functions are loaded |
+| `wk [dev\|notes]` | Start a structured tmux session |
 
 ## Productivity Tips
 
-1. **Create Zsh aliases for common operations**:
-   ```zsh
-   # Add to your .zshrc
-   alias dev='tmux attach -t dev || tmux new -s dev'
-   alias gc='git commit -m'
-   alias gst='git status'
-   ```
+1. **Use tmux sessions for context switching**:
+   - `wk dev` for development work
+   - `wk notes` for note-taking
+   - `tmux detach` to leave a session running
 
-2. **Use Zsh functions for complex workflows**:
+2. **Master Zsh directory navigation**:
+   - Use AUTO_PUSHD to build up directory stack
+   - Navigate with `cd -<TAB>` to see recent directories
+   - Use `..`, `...`, etc. for quick parent navigation
+
+3. **Set up Zsh functions for common operations**:
    ```zsh
-   # Add to your .zshrc
-   function webdev() {
-     tmux new-session -s webdev -n editor -d
-     tmux split-window -h -t webdev:editor
-     tmux split-window -v -t webdev:editor.2
-     tmux new-window -n server -t webdev
-     tmux send-keys -t webdev:server 'cd ~/projects/current && npm start' C-m
-     tmux select-window -t webdev:editor
-     tmux attach -t webdev
+   # Create a function for complex workflows
+   function deploy() {
+     git add .
+     git commit -m "$1"
+     git push
+     ssh user@server 'cd /path/to/repo && git pull'
    }
    ```
 
-3. **Zsh Configuration**:
-   ```zsh
-   # Add to your .zshrc
-   setopt AUTO_PUSHD          # Push directories onto directory stack
-   setopt PUSHD_IGNORE_DUPS   # Don't push duplicates
-   setopt PUSHD_SILENT        # Don't print directory stack
-   setopt EXTENDED_GLOB       # Use extended globbing
-   setopt AUTO_CD             # Type directory name to cd
+4. **Use Neovim marks for quick navigation**:
+   ```
+   ma   # Set mark 'a' at current position
+   'a   # Jump to line of mark 'a'
+   `a   # Jump to exact position of mark 'a'
    ```
 
-4. **Useful Functions**:
+5. **Create project-specific tmux layouts**:
    ```zsh
-   # Create and change to directory in one command
-   mcd() {
-     mkdir -p $1 && cd $1
+   # Add to your .zshrc
+   function rails-dev() {
+     tmux new-session -s rails -n editor -d
+     tmux send-keys -t rails:editor 'cd ~/projects/rails-app' C-m
+     tmux send-keys -t rails:editor 'nvim' C-m
+     
+     tmux new-window -t rails:1 -n server
+     tmux send-keys -t rails:server 'cd ~/projects/rails-app' C-m
+     tmux send-keys -t rails:server 'rails s' C-m
+     
+     tmux new-window -t rails:2 -n console
+     tmux send-keys -t rails:console 'cd ~/projects/rails-app' C-m
+     tmux send-keys -t rails:console 'rails c' C-m
+     
+     tmux select-window -t rails:editor
+     tmux attach -t rails
    }
+   ```
+
+6. **Set up Zsh suffix aliases for file types**:
+   ```zsh
+   # Add to your .zshrc
+   alias -s rb=nvim
+   alias -s py=nvim
+   alias -s js=nvim
+   alias -s md=nvim
    
-   # Find and open file with Neovim
-   nvimf() {
-     nvim $(find . -name "*$1*" | fzf)
-   }
+   # Now you can just type the filename to open it
+   # example.rb will open in Neovim
    ```
 
-Remember, mastery takes time—focus on learning a few new shortcuts each week rather than trying to memorize everything at once.
+7. **Use Zsh global aliases for command pipelines**:
+   ```zsh
+   # Add to your .zshrc
+   alias -g G='| grep'
+   alias -g L='| less'
+   alias -g H='| head'
+   alias -g T='| tail'
+   
+   # Usage:
+   ps aux G ruby    # Lists ruby processes
+   cat file.log L   # Views file with less
+   ```
+
+8. **Leverage FZF for fuzzy finding everywhere**:
+   - `Ctrl+R` for history search
+   - `Ctrl+T` for file search
+   - `nvimf` function to find and edit files
+
+Remember, mastery comes with practice. Focus on learning a few new shortcuts each week rather than trying to memorize everything at once.

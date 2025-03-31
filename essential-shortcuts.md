@@ -1,6 +1,6 @@
-# Terminal Development Environment: Essential Shortcuts
+# Zsh Essential Shortcuts
 
-> A concise reference for your Zsh, Neovim, and tmux workflow
+> A concise reference for your terminal workflow using Zsh, Neovim, and tmux
 
 ## System Navigation
 - `Cmd + Space`: Spotlight search
@@ -17,30 +17,63 @@
 - `cd -`: Navigate to previous directory
 - `cd -<TAB>`: Show directory history with numbers
 - `..`, `...`, `....`: Go up 1, 2, or 3 directories
-- `/path/to/dir`: Navigate without typing 'cd'
+- `/path/to/dir`: Navigate without typing 'cd' (AUTO_CD enabled)
+- `dirs -v`: List directory stack with numbers (AUTO_PUSHD enabled)
 
 ## Zsh Command Editing
 - `Ctrl+A/E`: Move to beginning/end of line
 - `Ctrl+U/K`: Clear line before/after cursor
 - `Ctrl+W`: Delete word before cursor
+- `Alt+F/B`: Move forward/backward one word
 - `Ctrl+R`: Search command history
+
+## Zsh Command History
+- `!!`: Repeat last command
+- `!$`: Last argument of previous command
+- `!*`: All arguments of previous command
+- `!abc`: Run most recent command starting with 'abc'
+- `^old^new`: Replace first occurrence of 'old' with 'new' in previous command
+
+## Zsh File Operations
+- `ls -l`: List files in long format
+- `ll`: List in long format (alias for `ls -la`)
+- `la`: List all including hidden (alias for `ls -a`)
+- `ls *(.)`: List only regular files (EXTENDED_GLOB enabled)
+- `ls *(/)`: List only directories
+- `ls **/*.rb`: Recursively list all Ruby files
 
 ## tmux
 > Prefix key is `Ctrl + a`
 - `prefix + c`: Create new window
 - `prefix + n/p`: Next/previous window
+- `prefix + [number]`: Go to window [number]
 - `prefix + |`: Split vertically
 - `prefix + -`: Split horizontally
 - `prefix + ←/→/↑/↓`: Navigate panes
 - `prefix + d`: Detach session
+- `prefix + [`: Enter copy mode (use vim keys to navigate)
+- `prefix + ]`: Paste from buffer
+
+## tmux Commands
+- `ta [name]`: Attach to session [name] (alias)
+- `tls`: List sessions (alias)
+- `tn [name]`: Create new session [name] (alias)
+- `tk [name]`: Kill session [name] (alias)
+- `dev`: Start or resume dev session (alias)
+- `notes`: Start or resume notes session (alias)
+- `wk dev`: Start unified dev session (function)
+- `wk notes`: Start unified notes session (function)
 
 ## Neovim Basics
 > Leader key is `Space`
-- `<leader>e`: Toggle file explorer
+- `<leader>e`: Toggle file explorer (NvimTree)
 - `<leader>ff`: Find files with Telescope
 - `<leader>fg`: Live grep with Telescope
+- `<leader>fb`: Buffers with Telescope
 - `<leader>w`: Save file
 - `<leader>q`: Quit
+- `<leader>h`: Clear search highlighting
+- `<leader>?`: Show common key mappings
 
 ## Neovim Navigation
 - `Ctrl + h/j/k/l`: Navigate between splits
@@ -48,6 +81,7 @@
 - `K`: Hover documentation (LSP)
 - `<leader>rn`: Rename symbol
 - `<leader>ca`: Code action
+- `[d/]d`: Go to previous/next diagnostic
 
 ## Git Aliases
 - `gs`: git status
@@ -55,17 +89,20 @@
 - `gc "message"`: git commit
 - `gp`: git push
 - `gl`: git pull
+- `<leader>gs`: Open Git status (Fugitive)
+- `<leader>gc`: Git commit (Fugitive)
+- `<leader>gp`: Git push (Fugitive)
 
-## Development Workflows
-- `dev`: Start/resume dev session
-- `notes`: Start/resume notes session
-- `ta SESSION`: Attach to tmux session
-- `tls`: List tmux sessions
-- `tn NAME`: Create new tmux session
+## Notes System Commands
+- `:Daily`: Create/edit today's daily note
+- `:Project`: Create/edit a project note
+- `:Learning`: Create/edit a learning note
+- `<leader>fn`: Find notes files
+- `<leader>fg`: Search within notes
+- `<leader>fr`: Show recently modified notes
 
-## Zsh File Operations
-- `ll`: List in long format (alias for `ls -la`)
-- `la`: List all including hidden (alias for `ls -a`)
-- `ls *(.)`: List only regular files
-- `ls *(/)`: List only directories
-- `ls **/*.rb`: Recursively list all Ruby files
+## Custom Functions
+- `mcd [dir]`: Create directory and change to it
+- `nvimf [pattern]`: Find and open file with Neovim
+- `check-functions`: Verify that key functions are loaded
+- `wk [dev|notes]`: Start a structured tmux session for development or notes
