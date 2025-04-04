@@ -52,10 +52,10 @@ git clone https://github.com/JoshuaMichaelHall-Tech/terminal-setup.git
 cd terminal-setup
 
 # Make the installation scripts executable
-chmod +x installer.rb troubleshooter.rb
+chmod +x bin/installer.rb bin/troubleshooter.rb
 
 # Run the installation script
-ruby installer.rb
+ruby bin/installer.rb
 ```
 
 The installation script provides three modes:
@@ -65,7 +65,7 @@ The installation script provides three modes:
 
 If you encounter any issues after installation, run the troubleshooter:
 ```zsh
-ruby troubleshooter.rb --fix
+ruby bin/troubleshooter.rb --fix
 ```
 
 #### Post-Installation Steps
@@ -104,10 +104,10 @@ The troubleshooter script now provides comprehensive diagnostic capabilities:
 
 ```zsh
 # Run the health check script (check only)
-ruby troubleshooter.rb
+ruby bin/troubleshooter.rb
 
 # Run the health check script and fix issues
-ruby troubleshooter.rb --fix
+ruby bin/troubleshooter.rb --fix
 ```
 
 The troubleshooter will:
@@ -138,7 +138,7 @@ To update to the latest version:
 
 ```zsh
 # Run the installer in update mode
-ruby installer.rb --minimal
+ruby bin/installer.rb --minimal
 ```
 
 ### Keeping LSP Configuration Up-to-date

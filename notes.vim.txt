@@ -1,0 +1,373 @@
+" Notes System Plugin for Neovim
+" Author: Joshua Michael Hall
+" Description: A simple notes system for daily, project, and learning notes
+
+" Configuration
+let g:notes_dir = expand('~/notes')
+let g:notes_daily_dir = g:notes_dir . '/daily'
+let g:notes_projects_dir = g:notes_dir . '/projects'
+let g:notes_learning_dir = g:notes_dir . '/learning'
+let g:notes_templates_dir = g:notes_dir . '/templates'
+
+" Helper function to ensure directories exist
+function! EnsureDirectoryExists(dir)
+  if !isdirectory(a:dir)
+    call mkdir(a:dir, 'p')
+    return 1
+  endif
+  return 1
+endfunction
+
+" Helper function to create a directory and initialize git if needed
+function! InitializeDirectory(dir)
+  if EnsureDirectoryExists(a:dir)
+    " Check if git is initialized
+    let l:git_dir = a:dir . '/.git'
+    if !isdirectory(l:git_dir)
+      " Initialize git repository
+      let l:current_dir = getcwd()
+      execute 'cd ' . a:dir
+      silent !git init
+      silent !git add .
+      silent !git commit -m "Initialize notes repository" --allow-empty
+      execute 'cd ' . l:current_dir
+    endif
+    return 1
+  endif
+  return 0
+endfunction
+
+" Create a new daily note
+function! CreateDailyNote()
+  let l:date = strftime('%Y-%m-%d')
+  let l:daily_path = g:notes_daily_dir . '/' . l:date . '.md'
+  
+  " Ensure daily directory exists
+  if !EnsureDirectoryExists(g:notes_daily_dir)
+    echo "Failed to create daily notes directory"
+    return
+  endif
+  
+  " Edit the file
+  execute 'edit ' . l:daily_path
+  
+  " If file is new, populate with template
+  if line('$') == 1 && getline(1) == ''
+    let l:template_path = g:notes_templates_dir . '/daily.md'
+    if filereadable(l:template_path)
+      let l:template = readfile(l:template_path)
+      call setline(1, l:template)
+      " Replace placeholders
+      execute '%s/{{date}}/' . l:date . '/g'
+    else
+      " Create basic structure if template doesn't exist
+      call setline(1, '# Daily Note: ' . l:date)
+      call append(1, '')
+      call append(2, '## Focus Areas')
+      call append(3, '- ')
+      call append(4, '')
+      call append(5, '## Notes')
+      call append(6, '- ')
+      call append(7, '')
+      call append(8, '## Tasks')
+      call append(9, '- [ ] ')
+      call append(10, '')
+      call append(11, '## Progress')
+      call append(12, '- ')
+      call append(13, '')
+      call append(14, '## Links')
+      call append(15, '- ')
+    endif
+  endif
+endfunction
+
+" Create a new project note
+function! CreateProjectNote()
+  let l:project_name = input('Project name: ')
+  if l:project_name == ''
+    return
+  endif
+  
+  let l:project_dir = g:notes_projects_dir . '/' . l:project_name
+  let l:notes_path = l:project_dir . '/notes.md'
+  
+  " Ensure project directory exists
+  if !EnsureDirectoryExists(l:project_dir)
+    echo "Failed to create project directory"
+    return
+  endif
+  
+  " Edit the file
+  execute 'edit ' . l:notes_path
+  
+  " If file is new, populate with template
+  if line('$') == 1 && getline(1) == ''
+    let l:template_path = g:notes_templates_dir . '/project.md'
+    if filereadable(l:template_path)
+      let l:template = readfile(l:template_path)
+      call setline(1, l:template)
+      " Replace placeholders
+      execute '%s/{{project_name}}/' . l:project_name . '/g'
+    else
+      " Create basic structure if template doesn't exist
+      call setline(1, '# Project: ' . l:project_name)
+      call append(1, '')
+      call append(2, '## Overview')
+      call append(3, '- **Goal**: ')
+      call append(4, '- **Timeline**: ')
+      call append(5, '- **Status**: ')
+      call append(6, '')
+      call append(7, '## Requirements')
+      call append(8, '- ')
+      call append(9, '')
+      call append(10, '## Notes')
+      call append(11, '- ')
+      call append(12, '')
+      call append(13, '## Tasks')
+      call append(14, '- [ ] ')
+      call append(15, '')
+      call append(16, '## Resources')
+      call append(17, '- ')
+    endif
+  endif
+endfunction
+
+" Create a new learning note
+function! CreateLearningNote()
+  let l:topic = input('Topic (e.g., ruby, python): ')
+  if l:topic == ''
+    return
+  endif
+  
+  let l:subject = input('Subject (e.g., classes, functions): ')
+  if l:subject == ''
+    return
+  endif
+  
+  let l:topic_dir = g:notes_learning_dir . '/' . l:topic
+  let l:notes_path = l:topic_dir . '/' . l:subject . '.md'
+  
+  " Ensure topic directory exists
+  if !EnsureDirectoryExists(l:topic_dir)
+    echo "Failed to create topic directory"
+    return
+  endif
+  
+  " Edit the file
+  execute 'edit ' . l:notes_path
+  
+  " If file is new, populate with template
+  if line('$') == 1 && getline(1) == ''
+    let l:template_path = g:notes_templates_dir . '/learning.md'
+    if filereadable(l:template_path)
+      let l:template = readfile(l:template_path)
+      call setline(1, l:template)
+      " Replace placeholders
+      execute '%s/{{topic}}/' . l:topic . ': ' . l:subject . '/g'
+    else
+      " Create basic structure if template doesn't exist
+      call setline(1, '# Learning: ' . l:topic . ': ' . l:subject)
+      call append(1, '')
+      call append(2, '## Objectives')
+      call append(3, '- ')
+      call append(4, '')
+      call append(5, '## Key Concepts')
+      call append(6, '- ')
+      call append(7, '')
+      call append(8, '## Code Examples')
+      call append(9, '```')
+      call append(10, '# Code example here')
+      call append(11, '```')
+      call append(12, '')
+      call append(13, '## Resources')
+      call append(14, '- ')
+      call append(15, '')
+      call append(16, '## Questions')
+      call append(17, '- ')
+      call append(18, '')
+      call append(19, '## Practice')
+      call append(20, '- ')
+    endif
+  endif
+endfunction
+
+" Find notes
+function! NotesFiles()
+  execute 'Telescope find_files cwd=' . g:notes_dir
+endfunction
+
+" Search within notes
+function! NotesGrep()
+  execute 'Telescope live_grep cwd=' . g:notes_dir
+endfunction
+
+" Show recently modified notes
+function! RecentNotes()
+  execute 'Telescope find_files cwd=' . g:notes_dir . ' sort=modified'
+endfunction
+
+" Change to notes directory
+function! NotesDir()
+  execute 'cd ' . g:notes_dir
+  echo "Changed to notes directory"
+endfunction
+
+" Open notes directory in file explorer
+function! NotesEdit()
+  execute 'edit ' . g:notes_dir
+endfunction
+
+" Define commands
+command! Daily call CreateDailyNote()
+command! Project call CreateProjectNote()
+command! Learning call CreateLearningNote()
+command! Notes call NotesDir()
+command! NotesEdit call NotesEdit()
+command! NotesFiles call NotesFiles()
+command! NotesGrep call NotesGrep()
+command! RecentNotes call RecentNotes()
+
+" Initialize notes system
+function! InitializeNotesSystem()
+  " Ensure all required directories exist
+  call EnsureDirectoryExists(g:notes_dir)
+  call EnsureDirectoryExists(g:notes_daily_dir)
+  call EnsureDirectoryExists(g:notes_projects_dir)
+  call EnsureDirectoryExists(g:notes_learning_dir)
+  call EnsureDirectoryExists(g:notes_templates_dir)
+  
+  " Create initial templates if they don't exist
+  let l:daily_template = g:notes_templates_dir . '/daily.md'
+  if !filereadable(l:daily_template)
+    call writefile([
+      \ '# Daily Note: {{date}}',
+      \ '',
+      \ '## Focus Areas',
+      \ '- ',
+      \ '',
+      \ '## Notes',
+      \ '- ',
+      \ '',
+      \ '## Tasks',
+      \ '- [ ] ',
+      \ '',
+      \ '## Progress',
+      \ '- ',
+      \ '',
+      \ '## Links',
+      \ '- '
+      \ ], l:daily_template)
+  endif
+  
+  let l:project_template = g:notes_templates_dir . '/project.md'
+  if !filereadable(l:project_template)
+    call writefile([
+      \ '# Project: {{project_name}}',
+      \ '',
+      \ '## Overview',
+      \ '- **Goal**: ',
+      \ '- **Timeline**: ',
+      \ '- **Status**: ',
+      \ '',
+      \ '## Requirements',
+      \ '- ',
+      \ '',
+      \ '## Notes',
+      \ '- ',
+      \ '',
+      \ '## Tasks',
+      \ '- [ ] ',
+      \ '',
+      \ '## Resources',
+      \ '- '
+      \ ], l:project_template)
+  endif
+  
+  let l:learning_template = g:notes_templates_dir . '/learning.md'
+  if !filereadable(l:learning_template)
+    call writefile([
+      \ '# Learning: {{topic}}',
+      \ '',
+      \ '## Objectives',
+      \ '- ',
+      \ '',
+      \ '## Key Concepts',
+      \ '- ',
+      \ '',
+      \ '## Code Examples',
+      \ '```',
+      \ '# Code example here',
+      \ '```',
+      \ '',
+      \ '## Resources',
+      \ '- ',
+      \ '',
+      \ '## Questions',
+      \ '- ',
+      \ '',
+      \ '## Practice',
+      \ '- '
+      \ ], l:learning_template)
+  endif
+  
+  " Initialize git repository
+  call InitializeDirectory(g:notes_dir)
+  
+  " Create .gitignore to exclude certain files
+  let l:gitignore_path = g:notes_dir . '/.gitignore'
+  if !filereadable(l:gitignore_path)
+    call writefile([
+      \ '# Ignore temporary files',
+      \ '*~',
+      \ '*.swp',
+      \ '*.swo',
+      \ '',
+      \ '# Ignore OS files',
+      \ '.DS_Store',
+      \ 'Thumbs.db',
+      \ '',
+      \ '# Ignore private notes',
+      \ 'private/'
+      \ ], l:gitignore_path)
+  endif
+  
+  " Create README
+  let l:readme_path = g:notes_dir . '/README.md'
+  if !filereadable(l:readme_path)
+    call writefile([
+      \ '# Notes System',
+      \ '',
+      \ 'This directory contains a structured notes system for:',
+      \ '',
+      \ '- **Daily notes**: Daily logs and journals',
+      \ '- **Project notes**: Documentation for specific projects',
+      \ '- **Learning notes**: Study materials organized by topic',
+      \ '',
+      \ '## Usage',
+      \ '',
+      \ 'Use the following commands in Neovim:',
+      \ '',
+      \ '- `:Daily` - Create or edit today''s daily note',
+      \ '- `:Project` - Create or edit a project note',
+      \ '- `:Learning` - Create or edit a learning note',
+      \ '- `:NotesFiles` - Find notes files',
+      \ '- `:NotesGrep` - Search within notes',
+      \ '- `:RecentNotes` - Show recently modified notes',
+      \ '',
+      \ 'This notes system is managed by a Neovim plugin and is backed by Git for version control.'
+      \ ], l:readme_path)
+  endif
+  
+  echo "Notes system initialized"
+endfunction
+
+" Ensure everything is set up on plugin load
+call InitializeNotesSystem()
+
+" Define mappings (can be customized based on preference)
+nnoremap <leader>fn :NotesFiles<CR>
+nnoremap <leader>fg :NotesGrep<CR>
+nnoremap <leader>fr :RecentNotes<CR>
+nnoremap <leader>fd :Daily<CR>
+nnoremap <leader>fp :Project<CR>
+nnoremap <leader>fl :Learning<CR>
