@@ -4,7 +4,7 @@
 
 A highly customized terminal-based development environment using Zsh, Neovim, tmux, and command-line tools optimized for software engineering workflows.
 
-![Version](https://img.shields.io/badge/version-0.1.0--alpha-blue)
+![Version](https://img.shields.io/badge/version-0.1.1--alpha-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Shell](https://img.shields.io/badge/shell-Zsh%20Only-orange)
 
@@ -44,24 +44,29 @@ This repository contains my terminal-based development environment configuration
 
 ### Option 1: Automated Installation (Recommended)
 
-The automated installation script will back up your existing configurations, set up a clean environment, and install all required components.
+The installation is now managed by two Ruby scripts for better reliability and error handling.
 
 ```zsh
 # Clone the repository
 git clone https://github.com/JoshuaMichaelHall-Tech/terminal-setup.git
 cd terminal-setup
 
-# Make the installation script executable
-chmod +x install.sh
+# Make the installation scripts executable
+chmod +x installer.rb troubleshooter.rb
 
 # Run the installation script
-./install.sh
+ruby installer.rb
 ```
 
 The installation script provides three modes:
 1. **Full Installation**: Complete setup including tools and configurations
 2. **Minimal Update**: Updates configurations without reinstalling tools
 3. **Permissions Fix**: Only fixes file permissions
+
+If you encounter any issues after installation, run the troubleshooter:
+```zsh
+ruby troubleshooter.rb --fix
+```
 
 #### Post-Installation Steps
 
@@ -95,19 +100,22 @@ For those who prefer more control over the installation process, please see the 
 
 ### Health Check
 
-To verify your environment is correctly set up and fix common issues:
+The troubleshooter script now provides comprehensive diagnostic capabilities:
 
 ```zsh
-# Run the health check script
-./health-check.sh
+# Run the health check script (check only)
+ruby troubleshooter.rb
+
+# Run the health check script and fix issues
+ruby troubleshooter.rb --fix
 ```
 
-The health check script will:
+The troubleshooter will:
 - Verify all required components are installed
 - Check for proper configuration files
 - Ensure Zsh functions and aliases are defined
 - Confirm notes system is properly set up
-- Optionally fix any issues it finds
+- Fix any issues it finds (when run with `--fix`)
 
 ### Uninstalling
 
@@ -130,8 +138,7 @@ To update to the latest version:
 
 ```zsh
 # Run the installer in update mode
-./install.sh
-# Then select option 2: Minimal update
+ruby installer.rb --minimal
 ```
 
 ### Keeping LSP Configuration Up-to-date
@@ -152,18 +159,17 @@ LSP server names and configurations can change between versions. To update your 
    :Mason
    ```
 
-## Known Issues
+## Known Issues and Fixes
 
-- **LSP Server Names**: Mason-lspconfig uses specific server names that might change over time. For current server names, run `:Mason` to see available packages and refer to the [server mapping documentation](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md). 
-  - If you receive the error `Server "X" is not a valid entry in ensure_installed`, you need to use the correct server name in your setup.
-  - The configuration now uses up-to-date server names like `ruby_lsp` (instead of `ruby_ls`) and `ts_ls` (instead of `tsserver`).
-  - Server names may continue to change in future versions, so check the documentation if you encounter issues.
+- **Powerlevel10k Configuration**: If `p10k configure` doesn't work, the troubleshooter script will create a minimal working configuration for you. You can then run `p10k configure` to customize it.
+
+- **tmux Split Panes**: If `Ctrl+a |` doesn't split panes vertically, the troubleshooter will fix your tmux configuration.
+
+- **Missing Neovim Plugins**: If Neovim reports it can't find plugins.lua, run the troubleshooter script to create all necessary directories and files.
+
+- **LSP Server Names**: Mason-lspconfig uses specific server names that might change over time. For current server names, run `:Mason` to see available packages and refer to the [server mapping documentation](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md).
 
 - **Font Rendering**: Some terminals may have issues displaying Nerd Font icons. Make sure you've properly configured your terminal to use the JetBrainsMono Nerd Font.
-
-- **Language Server Installation**: Some language servers may require additional dependencies like Node.js or npm. Check the Mason UI (`:Mason` in Neovim) for details.
-
-- **Zsh Configuration**: If you have existing Zsh customizations, you may need to merge them with this setup's configuration.
 
 ## Screenshots
 
