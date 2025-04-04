@@ -22,6 +22,8 @@ This repository contains my terminal-based development environment configuration
 - **Consistent Experience**: Same environment locally and on remote servers
 - **Version-Controlled**: Track all configuration changes with Git
 - **Zsh-Powered**: Takes full advantage of Zsh's powerful features
+- **Robust Installation**: Safe installation, update, and removal processes
+- **Self-Healing**: Built-in health check and repair capabilities
 
 ## Components
 
@@ -56,6 +58,11 @@ chmod +x install.sh
 ./install.sh
 ```
 
+The installation script provides three modes:
+1. **Full Installation**: Complete setup including tools and configurations
+2. **Minimal Update**: Updates configurations without reinstalling tools
+3. **Permissions Fix**: Only fixes file permissions
+
 #### Post-Installation Steps
 
 After running the installation script, you'll need to:
@@ -78,42 +85,54 @@ After running the installation script, you'll need to:
 
 6. **Restart Your Terminal:** For all changes to take effect.
 
-If fonts are displaying incorrectly (missing icons, broken symbols), make sure you've:
-- Installed the Nerd Fonts using the script
-- Configured your terminal emulator to use the Nerd Font
-- Selected a compatible font size and terminal color scheme
-
 The script creates a backup of your previous configuration in `~/terminal_env_backup_TIMESTAMP/`. If you need to restore your previous setup, you can copy files from this directory back to their original locations.
 
 ### Option 2: Manual Installation
 
 For those who prefer more control over the installation process, please see the [Setup Guide](./SETUP.md) for detailed step-by-step instructions and the [Tutorial](./TUTORIAL.md) for workflow examples.
+
+## Maintenance & Troubleshooting
+
+### Health Check
+
+To verify your environment is correctly set up and fix common issues:
+
+```zsh
+# Run the health check script
+./health-check.sh
 ```
 
-## Current Status
+The health check script will:
+- Verify all required components are installed
+- Check for proper configuration files
+- Ensure Zsh functions and aliases are defined
+- Confirm notes system is properly set up
+- Optionally fix any issues it finds
 
-This project is actively being developed and refined. Current focus areas:
+### Uninstalling
 
-- [ ] Streamlining Neovim LSP configuration
-- [ ] Improving tmux session management
-- [ ] Optimizing keybindings across tools
-- [ ] Creating language-specific configurations
-- [ ] Enhancing Zsh customizations
+If you need to remove the environment:
 
-### Known Issues
+```zsh
+# Run the uninstall script
+~/bin/uninstall-terminal-env.sh
+```
 
-- **LSP Server Names**: Mason-lspconfig uses specific server names that might change over time. For current server names, run `:Mason` to see available packages and refer to the [server mapping documentation](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md). 
-  - If you receive the error `Server "X" is not a valid entry in ensure_installed`, you need to use the correct server name in your setup.
-  - The configuration now uses up-to-date server names like `ruby_lsp` (instead of `ruby_ls`) and `ts_ls` (instead of `tsserver`).
-  - Server names may continue to change in future versions, so check the documentation if you encounter issues.
+The uninstaller provides two options:
+1. **Soft Uninstall**: Removes configurations but keeps tools
+2. **Full Uninstall**: Removes all configurations and installed tools
 
-- **Font Rendering**: Some terminals may have issues displaying Nerd Font icons. Make sure you've properly configured your terminal to use the JetBrainsMono Nerd Font.
+Your personal data (like notes) will be preserved but backed up before any changes.
 
-- **Language Server Installation**: Some language servers may require additional dependencies like Node.js or npm. Check the Mason UI (`:Mason` in Neovim) for details.
+### Updating
 
-- **Zsh Configuration**: If you have existing Zsh customizations, you may need to merge them with this setup's configuration.
+To update to the latest version:
 
-## Maintenance
+```zsh
+# Run the installer in update mode
+./install.sh
+# Then select option 2: Minimal update
+```
 
 ### Keeping LSP Configuration Up-to-date
 
@@ -132,6 +151,19 @@ LSP server names and configurations can change between versions. To update your 
    ```
    :Mason
    ```
+
+## Known Issues
+
+- **LSP Server Names**: Mason-lspconfig uses specific server names that might change over time. For current server names, run `:Mason` to see available packages and refer to the [server mapping documentation](https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md). 
+  - If you receive the error `Server "X" is not a valid entry in ensure_installed`, you need to use the correct server name in your setup.
+  - The configuration now uses up-to-date server names like `ruby_lsp` (instead of `ruby_ls`) and `ts_ls` (instead of `tsserver`).
+  - Server names may continue to change in future versions, so check the documentation if you encounter issues.
+
+- **Font Rendering**: Some terminals may have issues displaying Nerd Font icons. Make sure you've properly configured your terminal to use the JetBrainsMono Nerd Font.
+
+- **Language Server Installation**: Some language servers may require additional dependencies like Node.js or npm. Check the Mason UI (`:Mason` in Neovim) for details.
+
+- **Zsh Configuration**: If you have existing Zsh customizations, you may need to merge them with this setup's configuration.
 
 ## Screenshots
 

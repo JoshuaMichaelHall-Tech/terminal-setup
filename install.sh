@@ -1,7 +1,6 @@
 #!/bin/zsh
 
-# Terminal Development Environment Installation Script
-# Updated for integrated environment with notes system
+# Terminal Development Environment Installation Script (Improved)
 # Author: Joshua Michael Hall
 # License: MIT
 
@@ -13,6 +12,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Version
+VERSION="1.0.0"
 
 # Helper functions
 log_info() {
@@ -33,30 +35,119 @@ log_error() {
 
 check_command() {
     if ! command -v $1 &> /dev/null; then
-        log_error "$1 could not be found. Please install it first."
-        exit 1
+        log_warning "$1 could not be found. Will attempt to install it."
+        return 1
     fi
+    return 0
 }
 
-# Welcome message
+# Function to check if a line exists in a file
+line_exists() {
+    local line="$1"
+    local file="$2"
+    
+    if [ ! -f "$file" ]; then
+        return 1
+    fi
+    
+    grep -qF -- "$line" "$file"
+    return $?
+}
+
+# Function to add a line to a file if it doesn't already exist
+add_line_if_not_exists() {
+    local line="$1"
+    local file="$2"
+    
+    if [ ! -f "$file" ]; then
+        mkdir -p "$(dirname "$file")"
+        touch "$file"
+    fi
+    
+    if ! line_exists "$line" "$file"; then
+        echo "$line" >> "$file"
+        return 0
+    fi
+    return 1
+}
+
+# Function to create a backup with timestamp
+create_backup() {
+    local source_path="$1"
+    local backup_dir="$2"
+    
+    if [ -e "$source_path" ]; then
+        local filename=$(basename "$source_path")
+        local backup_path="$backup_dir/$filename"
+        
+        mkdir -p "$backup_dir"
+        
+        if [ -d "$source_path" ]; then
+            cp -r "$source_path" "$backup_path"
+        else
+            cp "$source_path" "$backup_path"
+        fi
+        
+        log_success "Created backup: $backup_path"
+        return 0
+    fi
+    
+    return 1
+}
+
+# Function to safely update a file
+safe_update() {
+    local source="$1"
+    local target="$2"
+    local backup_dir="$3"
+    
+    if [ -e "$target" ]; then
+        create_backup "$target" "$backup_dir"
+    fi
+    
+    mkdir -p "$(dirname "$target")"
+    cp -f "$source" "$target"
+}
+
+# Welcome message and mode selection
 echo "==============================================================="
-echo "      Integrated Terminal Environment Installation Script      "
+echo "      Terminal Environment Installation Script v$VERSION       "
 echo "==============================================================="
 echo ""
-echo "This script will set up a complete terminal-based environment:"
-echo "- Development tools with Neovim, tmux, and Zsh"
-echo "- Notes system with Git-backed markdown notes"
+echo "This script will set up or update your terminal environment."
 echo ""
-echo "IMPORTANT: This environment requires Zsh shell. Bash is not supported."
+echo "Available modes:"
+echo "1. Full installation (new setup or complete update)"
+echo "2. Minimal update (update configurations without reinstalling tools)"
+echo "3. Check and fix permissions only"
+echo "4. Uninstall (remove all components)"
 echo ""
-echo "THE SCRIPT WILL BACK UP YOUR EXISTING CONFIGURATIONS BEFORE"
-echo "MAKING ANY CHANGES, BUT PLEASE REVIEW THE SCRIPT BEFORE RUNNING."
+read "REPLY?Please select a mode (1-4, default: 1): "
 echo ""
-read "REPLY?Continue with installation? (y/n) "
+
+# Default to full installation
+INSTALL_MODE="${REPLY:-1}"
+
+case $INSTALL_MODE in
+    1) MODE_NAME="Full installation";;
+    2) MODE_NAME="Minimal update";;
+    3) MODE_NAME="Permissions fix only";;
+    4) MODE_NAME="Uninstall";
+       echo "To uninstall, please run the uninstall.sh script instead.";
+       exit 0;;
+    *) log_error "Invalid mode selected. Exiting."; exit 1;;
+esac
+
+echo "Running in mode: $MODE_NAME"
 echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    log_info "Installation aborted."
-    exit 1
+
+if [[ "$INSTALL_MODE" != "3" ]]; then
+    read "REPLY?Continue with $MODE_NAME? (y/n) "
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        log_info "Installation aborted."
+        exit 1
+    fi
 fi
 
 # Check operating system
@@ -65,160 +156,221 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 
-# Check if running in Zsh
-if [[ "$SHELL" != *"zsh"* ]]; then
-    log_warning "You are not currently using Zsh. This environment requires Zsh shell."
-    log_warning "The script will install Zsh, but you'll need to switch to it after installation."
-    log_warning "To switch to Zsh, run: chsh -s \$(which zsh)"
-    echo ""
-    read "REPLY?Continue anyway? (y/n) "
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        log_info "Installation aborted."
-        exit 1
-    fi
-fi
-
 # Create timestamp for backups
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$HOME/terminal_env_backup_$TIMESTAMP"
 
-log_info "Creating backup directory at $BACKUP_DIR"
-mkdir -p "$BACKUP_DIR"
+if [[ "$INSTALL_MODE" != "3" ]]; then
+    log_info "Creating backup directory at $BACKUP_DIR"
+    mkdir -p "$BACKUP_DIR"
 
-# Backup existing configurations
-log_info "Backing up existing configurations..."
+    # Backup existing configurations
+    log_info "Backing up existing configurations..."
 
-# Neovim
-if [ -d "$HOME/.config/nvim" ]; then
-    log_info "Backing up Neovim configuration..."
-    cp -r "$HOME/.config/nvim" "$BACKUP_DIR/nvim"
-fi
-if [ -d "$HOME/.local/share/nvim" ]; then
-    cp -r "$HOME/.local/share/nvim" "$BACKUP_DIR/nvim_share"
-fi
+    # Neovim
+    if [ -d "$HOME/.config/nvim" ]; then
+        log_info "Backing up Neovim configuration..."
+        cp -r "$HOME/.config/nvim" "$BACKUP_DIR/nvim"
+    fi
 
-# tmux
-if [ -f "$HOME/.tmux.conf" ]; then
-    log_info "Backing up tmux configuration..."
-    cp "$HOME/.tmux.conf" "$BACKUP_DIR/tmux.conf"
-fi
-if [ -d "$HOME/.tmux" ]; then
-    cp -r "$HOME/.tmux" "$BACKUP_DIR/tmux_dir"
-fi
+    # tmux
+    if [ -f "$HOME/.tmux.conf" ]; then
+        log_info "Backing up tmux configuration..."
+        cp "$HOME/.tmux.conf" "$BACKUP_DIR/tmux.conf"
+    fi
 
-# Zsh
-if [ -f "$HOME/.zshrc" ]; then
-    log_info "Backing up Zsh configuration..."
-    cp "$HOME/.zshrc" "$BACKUP_DIR/zshrc"
-fi
-if [ -d "$HOME/.oh-my-zsh" ]; then
-    log_info "Backing up Oh My Zsh directory (this might take a moment)..."
-    cp -r "$HOME/.oh-my-zsh" "$BACKUP_DIR/oh-my-zsh"
-fi
+    # Zsh
+    if [ -f "$HOME/.zshrc" ]; then
+        log_info "Backing up Zsh configuration..."
+        cp "$HOME/.zshrc" "$BACKUP_DIR/zshrc"
+    fi
+    if [ -f "$HOME/.p10k.zsh" ]; then
+        cp "$HOME/.p10k.zsh" "$BACKUP_DIR/p10k.zsh"
+    fi
 
-# Notes system
-if [ -d "$HOME/notes" ]; then
-    log_info "Backing up existing notes..."
-    cp -r "$HOME/notes" "$BACKUP_DIR/notes"
+    # Notes system
+    if [ -d "$HOME/notes" ]; then
+        log_info "Backing up existing notes..."
+        cp -r "$HOME/notes/templates" "$BACKUP_DIR/notes_templates" 2>/dev/null || true
+        cp "$HOME/notes/README.md" "$BACKUP_DIR/notes_readme.md" 2>/dev/null || true
+    fi
+
+    log_success "Backups completed at $BACKUP_DIR"
 fi
 
-log_success "Backups completed at $BACKUP_DIR"
+# Full installation mode
+if [[ "$INSTALL_MODE" == "1" ]]; then
+    # Install Homebrew if not installed
+    if ! check_command brew; then
+        log_info "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        
+        # Add Homebrew to PATH
+        if [[ -f /opt/homebrew/bin/brew ]]; then
+            BREW_PATH="$(/opt/homebrew/bin/brew shellenv)"
+            if ! line_exists 'eval "$(/opt/homebrew/bin/brew shellenv)"' "$HOME/.zshrc"; then
+                echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "$HOME/.zshrc"
+            fi
+            eval "$BREW_PATH"
+        fi
+    else
+        log_info "Homebrew already installed, updating..."
+        brew update
+    fi
 
-# Clean slate
-log_info "Implementing clean slate..."
+    # Install core packages
+    log_info "Installing core packages..."
+    brew install git curl wget ripgrep fd jq python node ruby || true
 
-# Remove existing configurations
-if [ -d "$HOME/.config/nvim" ]; then
-    log_info "Removing existing Neovim configuration..."
-    rm -rf "$HOME/.config/nvim"
-fi
-if [ -d "$HOME/.local/share/nvim" ]; then
-    log_info "Removing existing Neovim plugins..."
-    rm -rf "$HOME/.local/share/nvim"
-fi
-if [ -f "$HOME/.tmux.conf" ]; then
-    log_info "Removing existing tmux configuration..."
-    rm -f "$HOME/.tmux.conf"
-fi
+    # Install iTerm2 if not already installed
+    if [ ! -d "/Applications/iTerm.app" ]; then
+        log_info "Installing iTerm2..."
+        brew install --cask iterm2
+    else
+        log_info "iTerm2 already installed, skipping..."
+    fi
 
-# Install Homebrew if not installed
-if ! command -v brew &> /dev/null; then
-    log_info "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # Install Neovim
+    if ! check_command nvim; then
+        log_info "Installing Neovim..."
+        brew install neovim
+    else
+        log_info "Updating Neovim..."
+        brew upgrade neovim || true
+    fi
+
+    # Install tmux
+    if ! check_command tmux; then
+        log_info "Installing tmux..."
+        brew install tmux
+    else
+        log_info "Updating tmux..."
+        brew upgrade tmux || true
+    fi
+
+    # Install Watchman for notes syncing
+    if ! check_command watchman; then
+        log_info "Installing Watchman..."
+        brew install watchman
+    else
+        log_info "Updating Watchman..."
+        brew upgrade watchman || true
+    fi
+
+    # Install Zsh if not already installed
+    if ! check_command zsh; then
+        log_info "Installing Zsh..."
+        brew install zsh
+    fi
+
+    # Make Zsh the default shell if it's not already
+    if [[ "$SHELL" != *"zsh"* ]]; then
+        log_info "Setting Zsh as the default shell..."
+        chsh -s $(which zsh)
+        log_success "Zsh set as default shell. This will take effect after you log out and back in."
+    fi
+
+    # Install Oh My Zsh if not already installed
+    if [ ! -d "$HOME/.oh-my-zsh" ]; then
+        log_info "Installing Oh My Zsh..."
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    else
+        log_info "Oh My Zsh already installed, skipping..."
+    fi
+
+    # Install Powerlevel10k theme if not already installed
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" ]; then
+        log_info "Installing Powerlevel10k theme..."
+        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+    else
+        log_info "Updating Powerlevel10k theme..."
+        cd ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && git pull
+    fi
+
+    # Install Zsh plugins
+    log_info "Installing Zsh plugins..."
+    ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
     
-    # Add Homebrew to PATH
-    BREW_PATH="$(/opt/homebrew/bin/brew shellenv)"
-    echo "eval \"$BREW_PATH\"" >> "$HOME/.zshrc"
-    eval "$BREW_PATH"
-else
-    log_info "Homebrew already installed, updating..."
-    brew update
+    # zsh-autosuggestions
+    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
+        git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
+    else
+        cd "$ZSH_CUSTOM/plugins/zsh-autosuggestions" && git pull
+    fi
+    
+    # zsh-syntax-highlighting
+    if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
+    else
+        cd "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" && git pull
+    fi
+
+    # Install fonts
+    log_info "Installing fonts..."
+    brew tap homebrew/cask-fonts || true
+    brew install --cask font-jetbrains-mono-nerd-font || true
+    brew install --cask font-hack-nerd-font || true
+
+    # Install Rectangle for window management
+    if [ ! -d "/Applications/Rectangle.app" ]; then
+        log_info "Installing Rectangle..."
+        brew install --cask rectangle
+    else
+        log_info "Rectangle already installed, skipping..."
+    fi
+
+    # Install fzf
+    if ! check_command fzf; then
+        log_info "Installing fzf..."
+        brew install fzf
+        $(brew --prefix)/opt/fzf/install --all --no-update-rc
+    else
+        log_info "fzf already installed, skipping..."
+    fi
 fi
 
-# Install core packages
-log_info "Installing core packages..."
-brew install git curl wget ripgrep fd jq python node ruby
-
-# Install iTerm2
-log_info "Installing iTerm2..."
-brew install --cask iterm2
-
-# Install Neovim
-log_info "Installing Neovim..."
-brew install neovim
-
-# Install tmux
-log_info "Installing tmux..."
-brew install tmux
-
-# Install Watchman for notes syncing
-log_info "Installing Watchman..."
-brew install watchman
-
-# Install Zsh if not already installed
-if ! command -v zsh &> /dev/null; then
-    log_info "Installing Zsh..."
-    brew install zsh
-fi
-
-# Make Zsh the default shell if it's not already
-if [[ "$SHELL" != *"zsh"* ]]; then
-    log_info "Setting Zsh as the default shell..."
-    chsh -s $(which zsh)
-    log_success "Zsh set as default shell. This will take effect after you log out and back in."
-fi
-
-# Install Oh My Zsh if not already installed
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    log_info "Installing Oh My Zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
-
-# Install Powerlevel10k theme
-log_info "Installing Powerlevel10k theme..."
-git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-
-# Install Zsh plugins
-log_info "Installing Zsh plugins..."
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-
-# Configure Zsh
-log_info "Configuring Zsh..."
-cat > "$HOME/.zshrc" << 'EOL'
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+# Configuration updates (for both full and minimal modes)
+if [[ "$INSTALL_MODE" == "1" || "$INSTALL_MODE" == "2" ]]; then
+    # Configure Zsh
+    log_info "Configuring Zsh..."
+    
+    # Create .zshrc if it doesn't exist
+    if [ ! -f "$HOME/.zshrc" ]; then
+        touch "$HOME/.zshrc"
+    fi
+    
+    # Backup existing .zshrc
+    cp "$HOME/.zshrc" "$HOME/.zshrc.bak.$(date +%Y%m%d%H%M%S)"
+    
+    # Check for key configurations and add them if missing
+    
+    # Powerlevel10k instant prompt
+    P10K_PROMPT='if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-# Set up Oh My Zsh
+fi'
+    
+    if ! grep -q "p10k-instant-prompt" "$HOME/.zshrc"; then
+        # Add to the beginning of the file
+        sed -i '' -e "1s/^/$P10K_PROMPT\\n\\n/" "$HOME/.zshrc"
+    fi
+    
+    # Oh My Zsh configuration
+    OMZ_CONFIG='# Set up Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="powerlevel10k/powerlevel10k"
-
-# Plugins
+ZSH_THEME="powerlevel10k/powerlevel10k"'
+    
+    if ! grep -q "ZSH_THEME=\"powerlevel10k/powerlevel10k\"" "$HOME/.zshrc"; then
+        if grep -q "ZSH_THEME=" "$HOME/.zshrc"; then
+            # Replace existing ZSH_THEME line
+            sed -i '' -e "s/ZSH_THEME=.*$/ZSH_THEME=\"powerlevel10k\/powerlevel10k\"/" "$HOME/.zshrc"
+        else
+            # Add the configuration if not present
+            echo "$OMZ_CONFIG" >> "$HOME/.zshrc"
+        fi
+    fi
+    
+    # Plugins configuration
+    PLUGINS_CONFIG='# Plugins
 plugins=(
   git
   ruby
@@ -232,55 +384,58 @@ plugins=(
   zsh-autosuggestions
   zsh-syntax-highlighting
   rbenv
-)
-
-# Fix for missing completions
-if [[ ! -d /opt/homebrew/share/zsh/site-functions ]]; then
-  mkdir -p /opt/homebrew/share/zsh/site-functions
-fi
-
-# Skip problematic completion file
-zstyle ':completion:*:*:*:*:*' skip-file '/opt/homebrew/share/zsh/site-functions/_brew_services'
-
-source $ZSH/oh-my-zsh.sh
-
-# ============ Core Environment Settings ============
-# Set ZSH_CUSTOM if not already set
-ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
-
-# ============ Aliases ============
+)'
+    
+    if ! grep -q "plugins=(" "$HOME/.zshrc"; then
+        echo "$PLUGINS_CONFIG" >> "$HOME/.zshrc"
+    else
+        log_info "Plugins configuration already exists, not modifying..."
+    fi
+    
+    # Source Oh My Zsh
+    OMZ_SOURCE='source $ZSH/oh-my-zsh.sh'
+    add_line_if_not_exists "$OMZ_SOURCE" "$HOME/.zshrc"
+    
+    # Aliases
+    ALIASES_CONFIG='# ============ Aliases ============
 # Git aliases
-alias gs='git status'
-alias ga='git add'
-alias gc='git commit -m'
-alias gp='git push'
-alias gl='git pull'
+alias gs="git status"
+alias ga="git add"
+alias gc="git commit -m"
+alias gp="git push"
+alias gl="git pull"
 
 # Navigation aliases
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
 
 # Directory listing aliases
-alias ll='ls -la'
-alias la='ls -a'
+alias ll="ls -la"
+alias la="ls -a"
 
 # Neovim alias
-alias v='nvim'
-alias vi='nvim'
-alias vim='nvim'
+alias v="nvim"
+alias vi="nvim"
+alias vim="nvim"
 
 # Tmux aliases
-alias ta='tmux attach -t'
-alias tls='tmux list-sessions'
-alias tn='tmux new -s'
-alias tk='tmux kill-session -t'
+alias ta="tmux attach -t"
+alias tls="tmux list-sessions"
+alias tn="tmux new -s"
+alias tk="tmux kill-session -t"
 
 # Development workflow aliases
-alias dev='tmux attach -t dev || tmux new -s dev'
-alias notes='tmux attach -t notes || tmux new -s notes "nvim -c VimwikiIndex"'
-
-# ============ Functions ============
+alias dev="tmux attach -t dev || tmux new -s dev"
+alias notes="tmux attach -t notes || tmux new -s notes"'
+    
+    if ! grep -q "# ============ Aliases ============" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "$ALIASES_CONFIG" >> "$HOME/.zshrc"
+    fi
+    
+    # Functions
+    FUNCTIONS_CONFIG='# ============ Functions ============
 # Create and change to directory in one command
 mcd() {
   mkdir -p "$1" && cd "$1"
@@ -288,7 +443,11 @@ mcd() {
 
 # Find and open file with Neovim
 nvimf() {
-  nvim $(find . -name "*$1*" | fzf)
+  local file
+  file=$(find . -name "*$1*" | fzf)
+  if [[ -n "$file" ]]; then
+    nvim "$file"
+  fi
 }
 
 # Check if functions are properly loaded
@@ -296,6 +455,7 @@ check-functions() {
   echo "Testing key functions..."
   declare -f mcd > /dev/null && echo "✓ mcd (make directory and cd) function is available" || echo "✗ mcd function is not available"
   declare -f nvimf > /dev/null && echo "✓ nvimf (find and edit with neovim) function is available" || echo "✗ nvimf function is not available"
+  declare -f wk > /dev/null && echo "✓ wk (session manager) function is available" || echo "✗ wk function is not available"
 }
 
 # Unified session manager for both dev and notes
@@ -331,38 +491,69 @@ wk() {
       echo "  notes - Start or resume notes session"
       ;;
   esac
-}
-
-# fzf configuration
-export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
-
-# ============ Zsh-specific settings ============
+}'
+    
+    if ! grep -q "# ============ Functions ============" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "$FUNCTIONS_CONFIG" >> "$HOME/.zshrc"
+    fi
+    
+    # Zsh options
+    ZSH_OPTIONS='# ============ Zsh-specific settings ============
 setopt AUTO_PUSHD        # Push directories onto the directory stack
-setopt PUSHD_IGNORE_DUPS # Don't push duplicates
-setopt PUSHD_SILENT      # Don't print the directory stack after pushd/popd
+setopt PUSHD_IGNORE_DUPS # Do not push duplicates
+setopt PUSHD_SILENT      # Do not print the directory stack after pushd/popd
 setopt EXTENDED_GLOB     # Use extended globbing
-setopt AUTO_CD           # Type directory name to cd
+setopt AUTO_CD           # Type directory name to cd'
+    
+    if ! grep -q "# ============ Zsh-specific settings ============" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "$ZSH_OPTIONS" >> "$HOME/.zshrc"
+    fi
+    
+    # FZF configuration
+    FZF_CONFIG='# fzf configuration
+export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"'
+    
+    if ! grep -q "# fzf configuration" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "$FZF_CONFIG" >> "$HOME/.zshrc"
+    fi
+    
+    # P10K source
+    P10K_SOURCE='# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh'
+    
+    add_line_if_not_exists "$P10K_SOURCE" "$HOME/.zshrc"
+    
+    # Homebrew shellenv
+    BREW_SHELLENV='# Homebrew shellenv
+eval "$(/opt/homebrew/bin/brew shellenv)"'
+    
+    if [[ -f /opt/homebrew/bin/brew ]]; then
+        if ! grep -q "/opt/homebrew/bin/brew shellenv" "$HOME/.zshrc"; then
+            echo "" >> "$HOME/.zshrc"
+            echo "$BREW_SHELLENV" >> "$HOME/.zshrc"
+        fi
+    fi
+    
+    # Create bin directory if it doesn't exist
+    if [ ! -d "$HOME/bin" ]; then
+        mkdir -p "$HOME/bin"
+    fi
+    
+    # Add ~/bin to PATH if not already there
+    BIN_PATH='export PATH="$HOME/bin:$PATH"'
+    if ! grep -q "export PATH=\"\$HOME/bin" "$HOME/.zshrc"; then
+        echo "" >> "$HOME/.zshrc"
+        echo "$BIN_PATH" >> "$HOME/.zshrc"
+    fi
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# Homebrew shellenv
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
-# Homebrew ZSH Completions
-if type brew &>/dev/null; then
-  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
-  autoload -Uz compinit
-  compinit
-fi
-EOL
-
-# Configure tmux
-log_info "Configuring tmux..."
-cat > "$HOME/.tmux.conf" << 'EOL'
+    # Configure tmux
+    log_info "Configuring tmux..."
+    cat > "$HOME/.tmux.conf" << 'EOL'
 # Terminal Development Environment tmux Configuration
 
 # Remap prefix from 'C-b' to 'C-a'
@@ -433,13 +624,24 @@ set -g @plugin 'tmux-plugins/tmux-yank'
 run '~/.tmux/plugins/tpm/tpm'
 EOL
 
-# Set up Neovim configuration
-log_info "Setting up Neovim configuration..."
-mkdir -p "$HOME/.config/nvim/lua"
-mkdir -p "$HOME/.config/nvim/plugin"
+    # Install tmux plugin manager
+    if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+        log_info "Installing tmux plugin manager..."
+        mkdir -p "$HOME/.tmux/plugins"
+        git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    else
+        log_info "Updating tmux plugin manager..."
+        cd "$HOME/.tmux/plugins/tpm" && git pull
+    fi
 
-# Create init.lua
-cat > "$HOME/.config/nvim/init.lua" << 'EOL'
+    # Set up Neovim configuration
+    log_info "Setting up Neovim configuration..."
+    mkdir -p "$HOME/.config/nvim/lua"
+    mkdir -p "$HOME/.config/nvim/plugin"
+    mkdir -p "$HOME/.vim/undodir"
+
+    # Create init.lua
+    cat > "$HOME/.config/nvim/init.lua" << 'EOL'
 -- Terminal Development Environment Neovim Configuration
 
 -- Initialize Lazy.nvim
@@ -506,14 +708,13 @@ require("lazy").setup("plugins")
 
 -- ============ LSP Server Naming Guide ============
 -- When configuring Mason LSP, use these server names:
--- Ruby: rubylsp (not ruby_lsp)
--- TypeScript: tsserver (not typescript-language-server)
+-- Ruby: ruby_ls
+-- TypeScript: tsserver
 -- Check server names with :Mason and https://github.com/williamboman/mason-lspconfig.nvim/blob/main/doc/server-mapping.md
 EOL
 
-# Create plugins.lua
-mkdir -p "$HOME/.config/nvim/lua"
-cat > "$HOME/.config/nvim/lua/plugins.lua" << 'EOL'
+    # Create plugins.lua
+    cat > "$HOME/.config/nvim/lua/plugins.lua" << 'EOL'
 return {
   -- Colorscheme
   {
@@ -569,15 +770,14 @@ return {
     config = function()
       require('mason').setup()
       require('mason-lspconfig').setup({
-        -- Use correct server names according to mason-lspconfig documentation
-        ensure_installed = { 'lua_ls', 'rubylsp', 'pyright', 'tsserver' }
+        ensure_installed = { 'lua_ls', 'ruby_ls', 'pyright', 'tsserver' }
       })
       
       local lspconfig = require('lspconfig')
       
-      -- Configure language servers with correct names
+      -- Configure language servers
       lspconfig.lua_ls.setup{}      -- Lua language server
-      lspconfig.rubylsp.setup{}     -- Ruby language server
+      lspconfig.ruby_ls.setup{}     -- Ruby language server
       lspconfig.pyright.setup{}     -- Python language server
       lspconfig.tsserver.setup{}    -- TypeScript/JavaScript language server
       
@@ -589,583 +789,10 @@ return {
       vim.keymap.set('n', 'gr', vim.lsp.buf.references)
       vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
       vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
-    end,
-  },
-  
-  -- Autocomplete
-  {
-    'hrsh7th/nvim-cmp',
-    dependencies = {
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-buffer',
-      'hrsh7th/cmp-path',
-      'L3MON4D3/LuaSnip',
-      'saadparwaiz1/cmp_luasnip',
-    },
-    config = function()
-      local cmp = require('cmp')
-      local luasnip = require('luasnip')
       
-      cmp.setup({
-        snippet = {
-          expand = function(args)
-            luasnip.lsp_expand(args.body)
-          end,
-        },
-        mapping = cmp.mapping.preset.insert({
-          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-          ['<C-f>'] = cmp.mapping.scroll_docs(4),
-          ['<C-Space>'] = cmp.mapping.complete(),
-          ['<C-e>'] = cmp.mapping.abort(),
-          ['<CR>'] = cmp.mapping.confirm({ select = true }),
-          ['<Tab>'] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-              cmp.select_next_item()
-            elseif luasnip.expand_or_jumpable() then
-              luasnip.expand_or_jump()
-            else
-              fallback()
-            end
-          end, { 'i', 's' }),
-          ['<S-Tab>'] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-              cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
-              luasnip.jump(-1)
-            else
-              fallback()
-            end
-          end, { 'i', 's' }),
-        }),
-        sources = cmp.config.sources({
-          { name = 'nvim_lsp' },
-          { name = 'luasnip' },
-          { name = 'buffer' },
-          { name = 'path' },
-        })
-      })
-    end,
-  },
-  
-  -- Git integration
-  {
-    'tpope/vim-fugitive',
-    config = function()
-      vim.keymap.set('n', '<leader>gs', ':Git<CR>')
-      vim.keymap.set('n', '<leader>gc', ':Git commit<CR>')
-      vim.keymap.set('n', '<leader>gp', ':Git push<CR>')
-    end,
-  },
-  
-  -- Vimwiki for notes
-  {
-    'vimwiki/vimwiki',
-    config = function()
-      vim.g.vimwiki_list = {{path = '~/notes/', syntax = 'markdown', ext = '.md'}}
-    end,
-  },
-}
-EOL
-
-# Set up Notes System
-log_info "Setting up notes system..."
-
-# Create notes directory structure
-mkdir -p "$HOME/notes"
-mkdir -p "$HOME/notes/daily"
-mkdir -p "$HOME/notes/projects"
-mkdir -p "$HOME/notes/learning"
-mkdir -p "$HOME/notes/templates"
-mkdir -p "$HOME/notes/private"  # Not tracked by git
-
-# Create base note templates
-log_info "Creating note templates..."
-
-# Daily note template
-cat > "$HOME/notes/templates/daily.md" << 'EOL'
-# Daily Note: {{date}}
-
-## Focus Areas
-- 
-
-## Notes
-- 
-
-## Tasks
-- [ ] 
-
-## Progress
-- 
-
-## Links
-- 
-EOL
-
-# Project note template
-cat > "$HOME/notes/templates/project.md" << 'EOL'
-# Project: {{project_name}}
-
-## Overview
-- **Goal**: 
-- **Timeline**: 
-- **Status**: 
-
-## Requirements
-- 
-
-## Notes
-- 
-
-## Tasks
-- [ ] 
-
-## Resources
-- 
-EOL
-
-# Learning note template
-cat > "$HOME/notes/templates/learning.md" << 'EOL'
-# Learning: {{topic}}
-
-## Objectives
-- 
-
-## Key Concepts
-- 
-
-## Code Examples
-```
-# Code example here
-```
-
-## Resources
-- 
-
-## Questions
-- 
-
-## Practice
-- 
-EOL
-
-# Create notes.vim plugin for Neovim
-log_info "Creating Neovim notes plugin..."
-cat > "$HOME/.config/nvim/plugin/notes.vim" << 'EOL'
-" Notes System Configuration
-
-" Define the notes directory path
-let g:notes_dir = expand('~/notes')
-
-" Quickly open notes directory
-command! Notes cd ${g:notes_dir}
-command! NotesEdit edit ${g:notes_dir}
-
-" Helper function to ensure directory exists before writing
-function! EnsureDirectoryExists(dir)
-  if !isdirectory(a:dir)
-    call system('mkdir -p ' . shellescape(a:dir))
-    if !isdirectory(a:dir)
-      echoerr "Failed to create directory: " . a:dir
-      return 0
-    endif
-  endif
-  return 1
-endfunction
-
-" Create a new daily note
-function! CreateDailyNote()
-  let l:date = strftime('%Y-%m-%d')
-  let l:daily_dir = g:notes_dir . '/daily'
-  
-  " Ensure daily directory exists
-  if !EnsureDirectoryExists(l:daily_dir)
-    return
-  endif
-  
-  let l:file_path = l:daily_dir . '/' . l:date . '.md'
-  execute 'edit ' . l:file_path
-  
-  " If file is new, populate with template
-  if line('$') == 1 && getline(1) == ''
-    let l:template_path = g:notes_dir . '/templates/daily.md'
-    if filereadable(l:template_path)
-      let l:template = readfile(l:template_path)
-      call setline(1, l:template)
-      " Replace {{date}} placeholder with actual date
-      execute '%s/{{date}}/' . l:date . '/g'
-    else
-      echoerr "Template not found: " . l:template_path
-    endif
-  endif
-endfunction
-
-command! Daily call CreateDailyNote()
-
-" Create a new project note
-function! CreateProjectNote()
-  let l:project = input('Project name: ')
-  if l:project == ''
-    return
-  endif
-  
-  let l:project_dir = g:notes_dir . '/projects/' . l:project
-  
-  " Ensure project directory exists
-  if !EnsureDirectoryExists(l:project_dir)
-    return
-  endif
-  
-  let l:file_path = l:project_dir . '/notes.md'
-  execute 'edit ' . l:file_path
-  
-  " If file is new, populate with template
-  if line('$') == 1 && getline(1) == ''
-    let l:template_path = g:notes_dir . '/templates/project.md'
-    if filereadable(l:template_path)
-      let l:template = readfile(l:template_path)
-      call setline(1, l:template)
-      " Replace {{project_name}} placeholder with actual project name
-      execute '%s/{{project_name}}/' . l:project . '/g'
-    else
-      echoerr "Template not found: " . l:template_path
-    endif
-  endif
-endfunction
-
-command! Project call CreateProjectNote()
-
-" Create a new learning note
-function! CreateLearningNote()
-  let l:topic = input('Topic (e.g., ruby, python, javascript): ')
-  if l:topic == ''
-    return
-  endif
-  
-  let l:subject = input('Subject name: ')
-  if l:subject == ''
-    return
-  endif
-  
-  let l:learning_dir = g:notes_dir . '/learning/' . l:topic
-  
-  " Ensure learning directory exists
-  if !EnsureDirectoryExists(l:learning_dir)
-    return
-  endif
-  
-  let l:file_path = l:learning_dir . '/' . l:subject . '.md'
-  execute 'edit ' . l:file_path
-  
-  " If file is new, populate with template
-  if line(') == 1 && getline(1) == ''
-    let l:template_path = g:notes_dir . '/templates/learning.md'
-    if filereadable(l:template_path)
-      let l:template = readfile(l:template_path)
-      call setline(1, l:template)
-      " Replace {{topic}} placeholder with actual topic
-      execute '%s/{{topic}}/' . l:subject . '/g'
-    else
-      echoerr "Template not found: " . l:template_path
-    endif
-  endif
-endfunction
-
-command! Learning call CreateLearningNote()
-
-" Find notes with fzf (if available)
-if exists(':FZF')
-  command! NotesFind execute ':FZF ' . g:notes_dir
-  command! NotesFiles execute ':Files ' . g:notes_dir
-  
-  " Define a command to search note contents
-  command! NotesGrep execute ':Rg ' . g:notes_dir
-  
-  " Create a recent notes finder
-  function! s:find_recent_notes()
-    let l:command = 'find ' . shellescape(g:notes_dir) . ' -name "*.md" -type f -mtime -7 | sort -r'
-    call fzf#run({
-          \ 'source': l:command,
-          \ 'sink': 'e',
-          \ 'options': '--preview "cat {}"',
-          \ 'down': '40%'
-          \ })
-  endfunction
-  
-  command! RecentNotes call s:find_recent_notes()
-  
-  " Key mappings for notes
-  nnoremap <leader>fn :NotesFiles<CR>
-  nnoremap <leader>fg :NotesGrep<CR>
-  nnoremap <leader>fr :RecentNotes<CR>
-  nnoremap <leader>fd :Daily<CR>
-  nnoremap <leader>fp :Project<CR>
-  nnoremap <leader>fl :Learning<CR>
-endif
-EOL
-
-# Initialize Git repository for notes
-log_info "Initializing Git repository for notes..."
-cd "$HOME/notes"
-git init
-
-# Create .gitignore
-cat > "$HOME/notes/.gitignore" << 'EOL'
-.DS_Store
-*.swp
-*.swo
-node_modules/
-.obsidian/
-private/
-EOL
-
-# Create README
-cat > "$HOME/notes/README.md" << 'EOL'
-# Terminal-Centric Notes System
-
-A Git-based, cross-platform markdown notes system, optimized for terminal workflows with Neovim, tmux, and zsh.
-
-## Overview
-
-This repository contains a terminal-focused markdown notes system that automatically syncs across devices using Git.
-
-## Key Features
-
-- **Terminal Efficiency**: Built for Neovim, tmux, and zsh workflows
-- **Git Integration**: Automatic syncing with Watchman
-- **Cross-Platform**: Works on macOS, Linux, and Windows (via WSL)
-- **Mouseless Operation**: Complete keyboard control for maximum productivity
-
-## Usage
-
-- Start notes session: `wk notes`
-- Create daily note: `:Daily`
-- Create project note: `:Project`
-- Create learning note: `:Learning`
-- Search notes: `<leader>fn` or `:NotesFind`
-
-## Directory Structure
-
-- **daily/**: Daily notes and journaling
-- **projects/**: Project-specific notes
-- **learning/**: Learning materials organized by topic
-- **templates/**: Note templates
-- **private/**: Untracked personal notes (gitignored)
-EOL
-
-# Make initial commit
-git add .
-git commit -m "Initial notes repository setup"
-
-# Set up Watchman for auto-syncing
-log_info "Setting up Watchman for auto-syncing notes..."
-
-# Watch the notes directory
-watchman watch "$HOME/notes"
-
-# Create a trigger for markdown files
-watchman -j << EOT
-["trigger", "$(echo $HOME/notes)", {
-  "name": "git-auto-sync",
-  "expression": ["suffix", "md"],
-  "command": ["zsh", "-c", "cd ~/notes && git add . && (git diff --quiet --exit-code --cached || git commit -m 'Auto-update notes') || true"]
-}]
-EOT
-
-# Set up Launch Agent for Watchman (macOS only)
-log_info "Setting up Launch Agent for Watchman..."
-mkdir -p "$HOME/Library/LaunchAgents"
-
-# Get path to watchman executable
-WATCHMAN_PATH=$(which watchman)
-
-cat > "$HOME/Library/LaunchAgents/com.facebook.watchman.plist" << EOL
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.facebook.watchman</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>${WATCHMAN_PATH}</string>
-        <string>--foreground</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>StandardErrorPath</key>
-    <string>$HOME/Library/Logs/watchman.log</string>
-    <key>StandardOutPath</key>
-    <string>$HOME/Library/Logs/watchman.log</string>
-</dict>
-</plist>
-EOL
-
-# Load the agent
-launchctl unload "$HOME/Library/LaunchAgents/com.facebook.watchman.plist" 2>/dev/null || true
-launchctl load "$HOME/Library/LaunchAgents/com.facebook.watchman.plist"
-
-# Create Neovim undodir if it doesn't exist
-mkdir -p "$HOME/.vim/undodir"
-
-# Install fzf
-log_info "Installing fzf..."
-brew install fzf
-$(brew --prefix)/opt/fzf/install --all
-
-# Install fonts
-log_info "Installing fonts..."
-brew tap homebrew/cask-fonts
-brew install --cask font-jetbrains-mono-nerd-font
-brew install --cask font-hack-nerd-font
-
-# Install Rectangle for window management
-log_info "Installing Rectangle..."
-brew install --cask rectangle
-
-# Install tmux plugin manager
-log_info "Installing tmux plugin manager..."
-mkdir -p "$HOME/.tmux/plugins"
-git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
-
-# Final steps
-log_success "Installation completed successfully!"
-
-# Create shortcuts file
-log_info "Creating quick reference guide..."
-mkdir -p "$HOME/notes/docs"
-
-cat > "$HOME/notes/docs/zsh_essential_shortcuts.md" << 'EOL'
-# Zsh Essential Shortcuts
-
-> A concise reference for your terminal workflow using Zsh, Neovim, and tmux
-
-## System Navigation
-- `Cmd + Space`: Spotlight search
-- `Ctrl + Opt + ←/→/↑/↓`: Position windows with Rectangle
-- `Cmd + Tab`: Switch applications
-
-## Terminal (iTerm2)
-- `Cmd + T`: New tab
-- `Cmd + D`: Split vertically
-- `Cmd + Shift + D`: Split horizontally
-- `Cmd + Opt + ←/→/↑/↓`: Navigate between panes
-
-## Zsh Navigation
-- `cd -`: Navigate to previous directory
-- `cd -<TAB>`: Show directory history with numbers
-- `..`, `...`, `....`: Go up 1, 2, or 3 directories
-- `/path/to/dir`: Navigate without typing 'cd' (AUTO_CD enabled)
-- `dirs -v`: List directory stack with numbers (AUTO_PUSHD enabled)
-
-## Zsh Command Editing
-- `Ctrl+A/E`: Move to beginning/end of line
-- `Ctrl+U/K`: Clear line before/after cursor
-- `Ctrl+W`: Delete word before cursor
-- `Alt+F/B`: Move forward/backward one word
-- `Ctrl+R`: Search command history
-
-## tmux
-> Prefix key is `Ctrl + a`
-- `prefix + c`: Create new window
-- `prefix + n/p`: Next/previous window
-- `prefix + [number]`: Go to window [number]
-- `prefix + |`: Split vertically
-- `prefix + -`: Split horizontally
-- `prefix + ←/→/↑/↓`: Navigate panes
-- `prefix + d`: Detach session
-
-## tmux Commands
-- `ta [name]`: Attach to session [name] (alias)
-- `tls`: List sessions (alias)
-- `tn [name]`: Create new session [name] (alias)
-- `tk [name]`: Kill session [name] (alias)
-- `wk dev`: Start unified dev session (function)
-- `wk notes`: Start unified notes session (function)
-
-## Neovim Basics
-> Leader key is `Space`
-- `<leader>e`: Toggle file explorer (NvimTree)
-- `<leader>ff`: Find files with Telescope
-- `<leader>fg`: Live grep with Telescope
-- `<leader>w`: Save file
-- `<leader>q`: Quit
-- `<leader>h`: Clear search highlighting
-- `<leader>?`: Show common key mappings
-
-## Neovim Navigation
-- `Ctrl + h/j/k/l`: Navigate between splits
-- `gd`: Go to definition (LSP)
-- `K`: Hover documentation (LSP)
-- `<leader>rn`: Rename symbol
-- `<leader>ca`: Code action
-
-## Git Aliases
-- `gs`: git status
-- `ga`: git add
-- `gc "message"`: git commit
-- `gp`: git push
-- `gl`: git pull
-- `<leader>gs`: Open Git status (Fugitive)
-
-## Notes System Commands
-- `:Daily`: Create/edit today's daily note
-- `:Project`: Create/edit a project note
-- `:Learning`: Create/edit a learning note
-- `<leader>fn`: Find notes files
-- `<leader>fg`: Search within notes
-- `<leader>fr`: Show recently modified notes
-
-## Custom Functions
-- `mcd [dir]`: Create directory and change to it
-- `nvimf [pattern]`: Find and open file with Neovim
-- `check-functions`: Verify that key functions are loaded
-- `wk [dev|notes]`: Start a structured tmux session for development or notes
-EOL
-
-# Add shortcuts to the notes repository
-cd "$HOME/notes"
-git add docs/zsh_essential_shortcuts.md
-git commit -m "Add essential shortcuts reference"
-
-echo ""
-echo "==================================================================="
-echo "                    NEXT STEPS AND NOTES                         "
-echo "==================================================================="
-echo ""
-echo "IMPORTANT: This environment requires Zsh shell!"
-echo ""
-if [[ "$SHELL" != *"zsh"* ]]; then
-    echo "1. Zsh has been installed and set as your default shell, but"
-    echo "   this will only take effect after you log out and back in."
-    echo "   To start using Zsh right now, run: zsh"
-    echo ""
-fi
-echo "2. Configure your terminal:"
-echo "   - iTerm2: Preferences → Profiles → Text → Font → Select 'JetBrainsMono Nerd Font'"
-echo "   - VS Code Terminal (if you use it): "
-echo "     • Settings → Terminal → Default Profile → Select 'zsh'"
-echo "     • Settings → Terminal › Integrated: Font Family → 'JetBrainsMono Nerd Font'"
-echo ""
-echo "3. Run 'p10k configure' to set up the Powerlevel10k theme"
-echo ""
-echo "4. Install the notes system to your GitHub account (if desired):"
-echo "   cd ~/notes"
-echo "   gh repo create notes --private"
-echo "   git remote add origin <your-repo-url>"
-echo "   git push -u origin main"
-echo ""
-echo "5. Open Neovim and let it install plugins (it may show errors on first run)"
-echo ""
-echo "6. In tmux, press Ctrl+a followed by 'I' to install tmux plugins"
-echo ""
-echo "7. Your old configurations are backed up in: $BACKUP_DIR"
-echo ""
-echo "8. Start your development workflow with: wk dev"
-echo "   Start your notes workflow with: wk notes"
-echo ""
-echo "9. Access the shortcuts reference at: ~/notes/docs/zsh_essential_shortcuts.md"
-echo ""
-echo "Enjoy your integrated terminal development environment!"
-echo ""
+      -- Check for format function (handles version differences)
+      if vim.lsp.buf.format then
+        vim.keymap.set('n', '<leader>f', vim.lsp.buf.format)
+      else
+        vim.keymap.set('n', '<leader>f', vim.lsp.buf.formatting)
+      end
