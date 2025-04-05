@@ -40,27 +40,7 @@ CONFIG_DIRS = {
 CONFIG_FILES = {
   tmux_conf: File.join(HOME_DIR, '.tmux.conf')
 }
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--minimal", "Minimal installation (config only)") do
-    OPTIONS[:minimal] = true
-  end
-  
-  opts.on("--fix", "Fix mode (only fix existing installation)") do
-    OPTIONS[:fix] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { minimal: false, fix: false }
@@ -69,11 +49,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: tmux_installer.rb [options]"
   
   opts.on("--minimal", "Minimal installation (config only)") do
-    OPTIONS[:$1] = true
+    options[:minimal] = true
   end
   
   opts.on("--fix", "Fix mode (only fix existing installation)") do
-    OPTIONS[:$1] = true
+    options[:fix] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -111,30 +91,19 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def create_file(file, content)
   create_directory(File.dirname(file))
   
-  begin
-    File.write(file, content)
-    puts "✓ Created file: #{file}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating file #{file}: #{e.message}".red
-    return false
+  File.open(file, 'w') do |f|
+    f.write(content)
   end
-end
-
   check_result("Created file: #{file}")
 rescue StandardError => e
   puts "Error creating file #{file}: #{e.message}".red
@@ -191,16 +160,11 @@ def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
   backup_dir = File.join(HOME_DIR, "tmux_env_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  create_directory(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_tmux_configs(backup_dir)
   print_header("Backing Up Existing tmux Configuration")
@@ -402,7 +366,7 @@ def check_tmux_conf_settings
   if missing_settings.empty?
     return true
   else
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Fixing tmux.conf...".blue
       backup_file(tmux_conf)
       create_tmux_conf(tmux_conf)
@@ -477,7 +441,7 @@ def run_fix_mode
   end
   
   # Create or fix tmux.conf
-  if !File.exist?(CONFIG_FILES[:tmux_conf]) || OPTIONS[:$1]
+  if !File.exist?(CONFIG_FILES[:tmux_conf]) || options[:fix]
     success &= create_tmux_conf(CONFIG_FILES[:tmux_conf])
   end
   
@@ -491,9 +455,9 @@ end
 def main
   print_header("tmux Configuration Installer v#{VERSION}")
   
-  if OPTIONS[:$1]
+  if options[:fix]
     success = run_fix_mode
-  elsif OPTIONS[:$1]
+  elsif options[:minimal]
     success = run_minimal_update
   else
     success = run_full_install

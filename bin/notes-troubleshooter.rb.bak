@@ -52,27 +52,7 @@ OTHER_FILES = {
 NVIM_CONFIG_DIR = File.join(HOME_DIR, '.config/nvim')
 NVIM_PLUGIN_DIR = File.join(NVIM_CONFIG_DIR, 'plugin')
 NOTES_PLUGIN_FILE = File.join(NVIM_PLUGIN_DIR, 'notes.vim')
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:fix] = true
-  end
-  
-  opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:verbose] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { fix: false, verbose: false }
@@ -81,11 +61,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: notes_troubleshooter.rb [options]"
   
   opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:$1] = true
+    options[:fix] = true
   end
   
   opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:$1] = true
+    options[:verbose] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -123,30 +103,19 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def create_file(file, content)
   create_directory(File.dirname(file))
   
-  begin
-    File.write(file, content)
-    puts "✓ Created file: #{file}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating file #{file}: #{e.message}".red
-    return false
+  File.open(file, 'w') do |f|
+    f.write(content)
   end
-end
-
   check_result("Created file: #{file}")
 rescue StandardError => e
   puts "Error creating file #{file}: #{e.message}".red
@@ -326,7 +295,7 @@ def check_neovim_installation
     puts "✗ Neovim is not installed".red
     puts "  Notes plugin requires Neovim to be installed".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install Neovim...".blue
       if command_exists?('brew')
         output, success = run_command('brew install neovim')
@@ -362,7 +331,7 @@ def check_notes_directories
     puts "✗ Notes directory doesn't exist: #{NOTES_DIR}".red
     all_dirs_ok = false
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Creating notes directory...".blue
       if create_directory(NOTES_DIR)
         puts "✓ Created notes directory".green
@@ -381,7 +350,7 @@ def check_notes_directories
       puts "✗ #{name} subdirectory doesn't exist: #{dir}".red
       all_dirs_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} subdirectory...".blue
         if create_directory(dir)
           puts "✓ Created #{name} subdirectory".green
@@ -392,7 +361,7 @@ def check_notes_directories
     end
   end
   
-  if !all_dirs_ok && !OPTIONS[:$1]
+  if !all_dirs_ok && !options[:fix]
     puts "Run with --fix to create missing directories".yellow
   end
   
@@ -411,7 +380,7 @@ def check_template_files
       puts "✗ #{name} template doesn't exist: #{file}".red
       all_templates_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} template...".blue
         case name
         when :daily
@@ -432,7 +401,7 @@ def check_template_files
       puts "✗ #{name} file doesn't exist: #{file}".red
       all_templates_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} file...".blue
         case name
         when :readme
@@ -444,7 +413,7 @@ def check_template_files
     end
   end
   
-  if !all_templates_ok && !OPTIONS[:$1]
+  if !all_templates_ok && !options[:fix]
     puts "Run with --fix to create missing template files".yellow
   end
   
@@ -462,7 +431,7 @@ def check_git_repository
   else
     puts "✗ Git repository is not initialized: #{git_dir}".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Initializing Git repository...".blue
       if initialize_git_repository(NOTES_DIR)
         puts "✓ Initialized Git repository".green
@@ -487,7 +456,7 @@ def check_notes_plugin
   else
     puts "✗ Neovim plugin directory doesn't exist: #{NVIM_PLUGIN_DIR}".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Creating Neovim plugin directory...".blue
       if create_directory(NVIM_PLUGIN_DIR)
         puts "✓ Created Neovim plugin directory".green
@@ -528,7 +497,7 @@ def check_notes_plugin
     else
       puts "✗ Notes plugin is missing functions: #{missing_functions.join(', ')}".red
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating backup of existing plugin file...".blue
         create_backup(NOTES_PLUGIN_FILE)
         
@@ -579,7 +548,7 @@ def check_notes_plugin
   else
     puts "✗ Notes plugin file doesn't exist: #{NOTES_PLUGIN_FILE}".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Creating notes plugin file...".blue
       
       # Similar to above, try to source the content from the installer
@@ -621,7 +590,7 @@ def check_neovim_integration
     else
       puts "✗ Neovim init.lua doesn't include notes.vim plugin".red
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Adding notes.vim to init.lua...".blue
         
         # Create backup
@@ -662,7 +631,7 @@ def check_permissions
       puts "✗ Notes directory is not writable".red
       all_permissions_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Fixing permissions for notes directory...".blue
         FileUtils.chmod(0755, NOTES_DIR)
         if File.writable?(NOTES_DIR)
@@ -685,7 +654,7 @@ def check_permissions
         puts "✗ #{name} subdirectory is not writable".red
         all_permissions_ok = false
         
-        if OPTIONS[:$1]
+        if options[:fix]
           puts "Fixing permissions for #{name} subdirectory...".blue
           FileUtils.chmod(0755, dir)
           if File.writable?(dir)
@@ -756,7 +725,7 @@ def main
       puts "  #{index + 1}. #{issue}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "\nAttempted to fix all issues. Please check the output above for any remaining problems.".blue
       puts "You may need to restart Neovim to apply the changes.".blue
     else

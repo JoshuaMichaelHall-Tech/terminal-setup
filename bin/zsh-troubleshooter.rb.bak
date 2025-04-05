@@ -40,27 +40,7 @@ CONFIG_FILES = {
 OH_MY_ZSH_DIR = File.join(HOME_DIR, '.oh-my-zsh')
 P10K_THEME_DIR = File.join(OH_MY_ZSH_DIR, 'custom/themes/powerlevel10k')
 ZSH_PLUGINS_DIR = File.join(OH_MY_ZSH_DIR, 'custom/plugins')
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:fix] = true
-  end
-  
-  opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:verbose] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { fix: false, verbose: false }
@@ -69,11 +49,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: zsh_troubleshooter.rb [options]"
   
   opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:$1] = true
+    options[:fix] = true
   end
   
   opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:$1] = true
+    options[:verbose] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -111,30 +91,19 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def create_file(file, content)
   create_directory(File.dirname(file))
   
-  begin
-    File.write(file, content)
-    puts "✓ Created file: #{file}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating file #{file}: #{e.message}".red
-    return false
+  File.open(file, 'w') do |f|
+    f.write(content)
   end
-end
-
   check_result("Created file: #{file}")
 rescue StandardError => e
   puts "Error creating file #{file}: #{e.message}".red
@@ -257,7 +226,7 @@ def check_zsh_installation
     end
   else
     puts "✗ Zsh is not installed".red
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install Zsh...".blue
       if command_exists?('brew')
         run_command('brew install zsh')
@@ -284,7 +253,7 @@ def check_zsh_installation
     puts "✓ Zsh is the default shell: #{current_shell}".green
   else
     puts "✗ Zsh is not the default shell (current: #{current_shell})".yellow
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to set Zsh as default shell...".blue
       system("chsh -s $(which zsh)")
       if $?.success?
@@ -310,7 +279,7 @@ def check_oh_my_zsh
   else
     puts "✗ Oh My Zsh is not installed".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install Oh My Zsh...".blue
       install_cmd = 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'
       output, success = run_command(install_cmd)
@@ -341,7 +310,7 @@ def check_powerlevel10k
     puts "✗ Powerlevel10k theme is not installed".red
     theme_success = false
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install Powerlevel10k theme...".blue
       install_cmd = "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git #{P10K_THEME_DIR}"
       output, success = run_command(install_cmd)
@@ -369,7 +338,7 @@ def check_powerlevel10k
       puts "✗ Powerlevel10k theme is not set in .zshrc".red
       zshrc_success = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Attempting to set Powerlevel10k theme in .zshrc...".blue
         
         # Create backup first
@@ -396,7 +365,7 @@ def check_powerlevel10k
     puts "✗ .zshrc doesn't exist".red
     zshrc_success = false
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Creating basic .zshrc file...".blue
       # This will be handled by the check_config_files function
       zshrc_success = true
@@ -414,7 +383,7 @@ def check_powerlevel10k
     puts "✗ Powerlevel10k configuration file (.p10k.zsh) doesn't exist".red
     p10k_success = false
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Creating basic Powerlevel10k configuration...".blue
       p10k_success = create_p10k_conf(p10k_conf)
     else
@@ -431,7 +400,7 @@ def check_powerlevel10k
       puts "✗ .zshrc doesn't source .p10k.zsh".red
       source_success = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Adding p10k source line to .zshrc...".blue
         add_line_if_not_exists(zshrc, '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh')
         source_success = true
@@ -467,7 +436,7 @@ def check_zsh_plugins
       puts "✗ Plugin #{plugin_name} is not installed".red
       all_plugins_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Attempting to install #{plugin_name}...".blue
         install_cmd = "git clone #{repo_url} #{plugin_dir}"
         output, success = run_command(install_cmd)
@@ -497,7 +466,7 @@ def check_zsh_plugins
       puts "✗ Required plugins are not enabled in .zshrc".red
       all_plugins_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Attempting to enable required plugins in .zshrc...".blue
         
         # Create backup first
@@ -556,7 +525,7 @@ def check_config_files
       puts "✗ #{name} configuration file doesn't exist: #{file}".red
       all_files_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} configuration file...".blue
         
         case name
@@ -649,7 +618,7 @@ def check_aliases
       puts "  - #{alias_name}: #{command}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Adding missing aliases to .zshrc...".blue
       
       # Create backup first
@@ -704,7 +673,7 @@ def check_functions
       puts "  - #{function_name}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Adding missing functions to .zshrc...".blue
       
       # Create backup first
@@ -834,7 +803,7 @@ def check_settings
       puts "  - #{setting}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Adding missing Zsh settings to .zshrc...".blue
       
       # Create backup first
@@ -916,7 +885,7 @@ def main
       puts "  #{index + 1}. #{issue}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "\nAttempted to fix all issues. Please check the output above for any remaining problems.".blue
       puts "You may need to restart your terminal or run 'source ~/.zshrc' for changes to take effect.".blue
     else

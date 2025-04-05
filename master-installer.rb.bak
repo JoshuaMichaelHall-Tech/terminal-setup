@@ -33,7 +33,7 @@ end
 # Constants
 SCRIPT_DIR = File.dirname(File.expand_path(__FILE__))
 BIN_DIR = File.join(SCRIPT_DIR, 'bin')
-VERSION = '0.2.2'
+VERSION = '0.2.1'
 
 # Installation modes
 MODES = {
@@ -45,17 +45,6 @@ MODES = {
   tmux: 'tmux configuration only',
   notes: 'Notes system only',
   fix: 'Fix permissions only'
-}
-
-# Components to install in each mode
-MODE_COMPONENTS = {
-  full: [:core, :zsh, :nvim, :tmux, :notes],
-  minimal: [:core, :zsh, :nvim, :tmux, :notes],
-  core: [:core],
-  zsh: [:zsh],
-  nvim: [:nvim],
-  tmux: [:tmux],
-  notes: [:notes]
 }
 
 # Component scripts mapping (actual filenames in repository)
@@ -300,35 +289,56 @@ def main
     return 0
   end
   
-  # Install components based on the selected mode
-  if MODE_COMPONENTS.key?(options[:mode])
-    mode_name = options[:mode]
-    print_header("Running #{MODES[mode_name]}")
+  # Handle different installation modes
+  case options[:mode]
+  when :full
+    print_header("Running Full Installation")
     
-    # Get components for this mode
-    components_to_install = MODE_COMPONENTS[mode_name]
-    
-    # Install each component
+    # Run all component installers in the correct order
     success = true
-    components_to_install.each do |component|
-      success &= run_component_installation(component, mode_name == :minimal)
-    end
+    success &= run_component_installation(:core)
+    success &= run_component_installation(:zsh)
+    success &= run_component_installation(:nvim)
+    success &= run_component_installation(:tmux)
+    success &= run_component_installation(:notes)
     
     if success
-      print_header("#{MODES[mode_name]} Completed Successfully")
+      print_header("Full Installation Completed Successfully")
       puts "Your terminal development environment is now set up.".green
-      
-      if mode_name == :full || mode_name == :minimal
-        puts "\nNext steps:".blue
-        puts "1. Restart your terminal"
-        puts "2. Run 'p10k configure' to customize your prompt"
-        puts "3. Start using your new environment with 'wk dev' or 'wk notes'"
-      end
+      puts "\nNext steps:".blue
+      puts "1. Restart your terminal"
+      puts "2. Run 'p10k configure' to customize your prompt"
+      puts "3. Start using your new environment with 'wk dev' or 'wk notes'"
     else
       print_header("Installation Completed with Errors")
       puts "Some components may not have installed correctly.".red
       puts "Please check the error messages above.".yellow
     end
+    
+  when :minimal
+    print_header("Running Minimal Update")
+    
+    # Run all component installers with minimal flag
+    success = true
+    COMPONENTS.each do |component, _|
+      success &= run_component_installation(component, true)
+    end
+    
+    if success
+      print_header("Minimal Update Completed Successfully")
+      puts "Your terminal development environment has been updated.".green
+      puts "\nNext steps:".blue
+      puts "1. Restart your terminal"
+      puts "2. Start using your updated environment with 'wk dev' or 'wk notes'"
+    else
+      print_header("Update Completed with Errors")
+      puts "Some components may not have updated correctly.".red
+      puts "Please check the error messages above.".yellow
+    end
+    
+  # Handle individual component modes
+  when :core, :zsh, :nvim, :tmux, :notes
+    run_component_installation(options[:mode])
   end
   
   0 # Return success

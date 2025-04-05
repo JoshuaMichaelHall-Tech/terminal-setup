@@ -44,27 +44,7 @@ NOTES_SUBDIRS = {
 NVIM_CONFIG_DIR = File.join(HOME_DIR, '.config/nvim')
 NVIM_PLUGIN_DIR = File.join(NVIM_CONFIG_DIR, 'plugin')
 NOTES_PLUGIN_FILE = File.join(NVIM_PLUGIN_DIR, 'notes.vim')
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--minimal", "Minimal installation (config only)") do
-    OPTIONS[:minimal] = true
-  end
-  
-  opts.on("--fix", "Fix mode (only fix existing installation)") do
-    OPTIONS[:fix] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { minimal: false, fix: false }
@@ -73,11 +53,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: notes_installer.rb [options]"
   
   opts.on("--minimal", "Minimal installation (config only)") do
-    OPTIONS[:$1] = true
+    options[:minimal] = true
   end
   
   opts.on("--fix", "Fix mode (only fix existing installation)") do
-    OPTIONS[:$1] = true
+    options[:fix] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -115,30 +95,19 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def create_file(file, content)
   create_directory(File.dirname(file))
   
-  begin
-    File.write(file, content)
-    puts "✓ Created file: #{file}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating file #{file}: #{e.message}".red
-    return false
+  File.open(file, 'w') do |f|
+    f.write(content)
   end
-end
-
   check_result("Created file: #{file}")
 rescue StandardError => e
   puts "Error creating file #{file}: #{e.message}".red
@@ -188,16 +157,11 @@ def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
   backup_dir = File.join(HOME_DIR, "notes_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  create_directory(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_notes(backup_dir)
   print_header("Backing Up Existing Notes")
@@ -807,7 +771,7 @@ def check_notes_integration
     else
       puts "✗ Neovim init.lua doesn't include notes.vim plugin".red
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Adding notes.vim to init.lua...".blue
         append_to_file(init_file, "\n-- Notes system\nvim.cmd('source ' .. vim.fn.stdpath('config') .. '/plugin/notes.vim')")
       else
@@ -940,7 +904,7 @@ def run_fix_mode
   success &= create_directory(NVIM_PLUGIN_DIR) unless Dir.exist?(NVIM_PLUGIN_DIR)
   
   # Create notes plugin file
-  if !File.exist?(NOTES_PLUGIN_FILE) || OPTIONS[:$1]
+  if !File.exist?(NOTES_PLUGIN_FILE) || options[:fix]
     backup_file(NOTES_PLUGIN_FILE) if File.exist?(NOTES_PLUGIN_FILE)
     success &= create_notes_plugin(NOTES_PLUGIN_FILE)
   end
@@ -955,9 +919,9 @@ end
 def main
   print_header("Notes System Installer v#{VERSION}")
   
-  if OPTIONS[:$1]
+  if options[:fix]
     success = run_fix_mode
-  elsif OPTIONS[:$1]
+  elsif options[:minimal]
     success = run_minimal_update
   else
     success = run_full_install

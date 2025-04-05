@@ -109,18 +109,13 @@ end
 
 def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-  backup_dir = File.join(HOME_DIR, "core_env_backup_#{timestamp}")
+  backup_dir = File.join(HOME_DIR, "core_uninstall_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  FileUtils.mkdir_p(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_configs(backup_dir)
   print_header("Backing Up Configurations")

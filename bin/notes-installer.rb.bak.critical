@@ -115,30 +115,19 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def create_file(file, content)
   create_directory(File.dirname(file))
   
-  begin
-    File.write(file, content)
-    puts "✓ Created file: #{file}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating file #{file}: #{e.message}".red
-    return false
+  File.open(file, 'w') do |f|
+    f.write(content)
   end
-end
-
   check_result("Created file: #{file}")
 rescue StandardError => e
   puts "Error creating file #{file}: #{e.message}".red
@@ -188,16 +177,11 @@ def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
   backup_dir = File.join(HOME_DIR, "notes_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  create_directory(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_notes(backup_dir)
   print_header("Backing Up Existing Notes")

@@ -39,31 +39,7 @@ CONFIG_DIRS = {
 CONFIG_FILES = {
   tmux_conf: File.join(HOME_DIR, '.tmux.conf')
 }
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = { full: false, keep_data: true, force: false }
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--full", "Full uninstallation (remove all configurations and data)") do
-    OPTIONS[:full] = true
-  end
-  
-  opts.on("--no-keep-data", "Do not keep user data") do
-    OPTIONS[:keep_data] = false
-  end
-  
-  opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:force] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { keep_plugins: true, force: false }
@@ -72,11 +48,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: tmux_uninstaller.rb [options]"
   
   opts.on("--no-keep-plugins", "Remove all plugins, not just our configuration") do
-    OPTIONS[:$1] = false
+    options[:keep_plugins] = false
   end
   
   opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:$1] = true
+    options[:force] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -105,18 +81,13 @@ end
 
 def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-  backup_dir = File.join(HOME_DIR, "tmux_env_backup_#{timestamp}")
+  backup_dir = File.join(HOME_DIR, "tmux_uninstall_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  FileUtils.mkdir_p(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_tmux_configs(backup_dir)
   print_header("Backing Up tmux Configurations")
@@ -169,7 +140,7 @@ def remove_tmux_plugins
       
       # If no other plugins are left and we're removing everything, remove plugins directory
       plugins_dir = File.join(CONFIG_DIRS[:tmux], 'plugins')
-      if !OPTIONS[:$1] && Dir.exist?(plugins_dir) && Dir.empty?(plugins_dir)
+      if !options[:keep_plugins] && Dir.exist?(plugins_dir) && Dir.empty?(plugins_dir)
         FileUtils.rm_rf(plugins_dir)
         puts "Removed empty plugins directory".green
       end
@@ -188,7 +159,7 @@ end
 def remove_tmux_directory
   print_header("Removing tmux Directory")
   
-  if OPTIONS[:$1]
+  if options[:keep_plugins]
     puts "Keeping user plugins as requested, not removing .tmux directory".green
     return true
   end
@@ -213,13 +184,13 @@ def main
   print_header("tmux Configuration Uninstaller v#{VERSION}")
   
   puts "This script will remove tmux customizations installed by the terminal-setup project.".yellow
-  if !OPTIONS[:$1]
+  if !options[:keep_plugins]
     puts "WARNING: All tmux plugins will be removed.".red
   else
     puts "User-installed plugins will be preserved.".green
   end
   
-  unless OPTIONS[:$1]
+  unless options[:force]
     print "Are you sure you want to proceed? (y/n): "
     confirm = gets.chomp.downcase
     

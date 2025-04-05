@@ -54,27 +54,7 @@ CONFIG_FILES = {
   notes_vim: File.join(CONFIG_SUBDIRS[:plugin], 'notes.vim')
 }
 LAZY_DIR = File.join(CONFIG_DIRS[:nvim_data], 'lazy/lazy.nvim')
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:fix] = true
-  end
-  
-  opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:verbose] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { fix: false, verbose: false }
@@ -83,11 +63,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: nvim_troubleshooter.rb [options]"
   
   opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:$1] = true
+    options[:fix] = true
   end
   
   opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:$1] = true
+    options[:verbose] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -125,30 +105,19 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def create_file(file, content)
   create_directory(File.dirname(file))
   
-  begin
-    File.write(file, content)
-    puts "✓ Created file: #{file}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating file #{file}: #{e.message}".red
-    return false
+  File.open(file, 'w') do |f|
+    f.write(content)
   end
-end
-
   check_result("Created file: #{file}")
 rescue StandardError => e
   puts "Error creating file #{file}: #{e.message}".red
@@ -610,7 +579,7 @@ def check_nvim_installation
     end
   else
     puts "✗ Neovim is not installed".red
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install Neovim...".blue
       if command_exists?('brew')
         output, success = run_command('brew install neovim')
@@ -648,7 +617,7 @@ def check_nvim_directories
       puts "✗ #{name} directory doesn't exist: #{dir}".red
       all_dirs_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} directory...".blue
         if create_directory(dir)
           puts "✓ Created #{name} directory".green
@@ -667,7 +636,7 @@ def check_nvim_directories
       puts "✗ #{name} subdirectory doesn't exist: #{dir}".red
       all_dirs_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} subdirectory...".blue
         if create_directory(dir)
           puts "✓ Created #{name} subdirectory".green
@@ -678,7 +647,7 @@ def check_nvim_directories
     end
   end
   
-  if !all_dirs_ok && !OPTIONS[:$1]
+  if !all_dirs_ok && !options[:fix]
     puts "Run with --fix to create missing directories".yellow
   end
   
@@ -697,7 +666,7 @@ def check_nvim_configuration_files
       puts "✗ #{name} configuration file doesn't exist: #{file}".red
       all_files_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} configuration file...".blue
         case name
         when :init
@@ -715,7 +684,7 @@ def check_nvim_configuration_files
     end
   end
   
-  if !all_files_ok && !OPTIONS[:$1]
+  if !all_files_ok && !options[:fix]
     puts "Run with --fix to create missing configuration files".yellow
   end
   
@@ -731,7 +700,7 @@ def check_plugin_manager
   else
     puts "✗ Lazy.nvim plugin manager is not installed: #{LAZY_DIR}".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install Lazy.nvim...".blue
       parent_dir = File.dirname(LAZY_DIR)
       create_directory(parent_dir)
@@ -769,7 +738,7 @@ def check_permissions
         puts "✗ #{name} directory has incorrect permissions".red
         all_perms_ok = false
         
-        if OPTIONS[:$1]
+        if options[:fix]
           begin
             FileUtils.chmod(0755, dir)
             puts "✓ Fixed permissions for #{name} directory".green
@@ -790,7 +759,7 @@ def check_permissions
         puts "✗ #{name} subdirectory has incorrect permissions".red
         all_perms_ok = false
         
-        if OPTIONS[:$1]
+        if options[:fix]
           begin
             FileUtils.chmod(0755, dir)
             puts "✓ Fixed permissions for #{name} subdirectory".green
@@ -802,7 +771,7 @@ def check_permissions
     end
   end
   
-  if !all_perms_ok && !OPTIONS[:$1]
+  if !all_perms_ok && !options[:fix]
     puts "Run with --fix to fix directory permissions".yellow
   end
   
@@ -840,7 +809,7 @@ def check_init_lua_content
   end
   
   if !missing_components.empty?
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Creating backup of existing init.lua and creating new one...".blue
       create_backup(init_file)
       create_init_lua(init_file)
@@ -902,7 +871,7 @@ def main
       puts "  #{index + 1}. #{issue}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "\nAttempted to fix all issues. Please check the output above for any remaining problems.".blue
       puts "You may need to restart Neovim to apply the changes.".blue
     else

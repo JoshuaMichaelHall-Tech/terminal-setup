@@ -42,31 +42,7 @@ P10K_THEME_DIR = File.join(OH_MY_ZSH_DIR, 'custom/themes/powerlevel10k')
 ZSH_PLUGINS_DIR = File.join(OH_MY_ZSH_DIR, 'custom/plugins')
 ZSH_AUTOSUGGESTIONS_DIR = File.join(ZSH_PLUGINS_DIR, 'zsh-autosuggestions')
 ZSH_SYNTAX_HIGHLIGHTING_DIR = File.join(ZSH_PLUGINS_DIR, 'zsh-syntax-highlighting')
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = { full: false, keep_data: true, force: false }
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--full", "Full uninstallation (remove all configurations and data)") do
-    OPTIONS[:full] = true
-  end
-  
-  opts.on("--no-keep-data", "Do not keep user data") do
-    OPTIONS[:keep_data] = false
-  end
-  
-  opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:force] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { full: false, keep_data: true, force: false }
@@ -75,15 +51,15 @@ OptionParser.new do |opts|
   opts.banner = "Usage: zsh_uninstaller.rb [options]"
   
   opts.on("--full", "Full uninstallation (remove Oh My Zsh completely)") do
-    OPTIONS[:$1] = true
+    options[:full] = true
   end
   
   opts.on("--no-keep-data", "Do not keep custom data") do
-    OPTIONS[:$1] = false
+    options[:keep_data] = false
   end
   
   opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:$1] = true
+    options[:force] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -112,18 +88,13 @@ end
 
 def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-  backup_dir = File.join(HOME_DIR, "zsh_env_backup_#{timestamp}")
+  backup_dir = File.join(HOME_DIR, "zsh_uninstall_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  FileUtils.mkdir_p(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_zsh_configs(backup_dir)
   print_header("Backing Up Existing Zsh Configurations")
@@ -322,9 +293,9 @@ def main
   print_header("Zsh Configuration Uninstaller v#{VERSION}")
   
   puts "This script will remove Zsh customizations installed by the terminal-setup project.".yellow
-  puts "Running in#{OPTIONS[:$1] ? ' full' : ' soft'} uninstall mode.".yellow
+  puts "Running in#{options[:full] ? ' full' : ' soft'} uninstall mode.".yellow
   
-  unless OPTIONS[:$1]
+  unless options[:force]
     print "Are you sure you want to proceed? (y/n): "
     confirm = gets.chomp.downcase
     
@@ -350,7 +321,7 @@ def main
   success &= remove_powerlevel10k
   
   # Remove Oh My Zsh if doing a full uninstall
-  if OPTIONS[:$1]
+  if options[:full]
     success &= remove_oh_my_zsh
   end
   
@@ -359,7 +330,7 @@ def main
     puts "Zsh configuration has been removed.".green
     puts "Your original configurations were backed up to: #{backup_dir}".green
     
-    if OPTIONS[:$1]
+    if options[:full]
       puts "\nYou may want to switch back to bash as your default shell:".yellow
       puts "  chsh -s /bin/bash".yellow
     else

@@ -40,27 +40,7 @@ CONFIG_FILES = {
   tmux_conf: File.join(HOME_DIR, '.tmux.conf')
 }
 TPM_DIR = File.join(CONFIG_DIRS[:tmux], 'plugins/tpm')
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:fix] = true
-  end
-  
-  opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:verbose] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { fix: false, verbose: false }
@@ -69,11 +49,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: tmux_troubleshooter.rb [options]"
   
   opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:$1] = true
+    options[:fix] = true
   end
   
   opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:$1] = true
+    options[:verbose] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -111,30 +91,19 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def create_file(file, content)
   create_directory(File.dirname(file))
   
-  begin
-    File.write(file, content)
-    puts "✓ Created file: #{file}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating file #{file}: #{e.message}".red
-    return false
+  File.open(file, 'w') do |f|
+    f.write(content)
   end
-end
-
   check_result("Created file: #{file}")
 rescue StandardError => e
   puts "Error creating file #{file}: #{e.message}".red
@@ -255,7 +224,7 @@ def check_tmux_installation
     end
   else
     puts "✗ tmux is not installed".red
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install tmux...".blue
       if command_exists?('brew')
         output, success = run_command('brew install tmux')
@@ -292,7 +261,7 @@ def check_tmux_directories
       puts "✗ #{name} directory doesn't exist: #{dir}".red
       all_dirs_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} directory...".blue
         if create_directory(dir)
           puts "✓ Created #{name} directory".green
@@ -310,7 +279,7 @@ def check_tmux_directories
     puts "✗ tmux Plugin Manager directory doesn't exist: #{TPM_DIR}".red
     all_dirs_ok = false
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install tmux Plugin Manager...".blue
       tpm_parent_dir = File.dirname(TPM_DIR)
       create_directory(tpm_parent_dir)
@@ -328,7 +297,7 @@ def check_tmux_directories
     end
   end
   
-  if !all_dirs_ok && !OPTIONS[:$1]
+  if !all_dirs_ok && !options[:fix]
     puts "Run with --fix to create missing directories".yellow
   end
   
@@ -364,7 +333,7 @@ def check_tmux_configuration
     end
     
     # If any key settings are missing and fix mode is enabled, create a new config
-    if !missing_settings.empty? && OPTIONS[:$1]
+    if !missing_settings.empty? && options[:fix]
       puts "Missing essential tmux settings, creating new configuration...".blue
       create_backup(tmux_conf)
       create_tmux_conf(tmux_conf)
@@ -379,7 +348,7 @@ def check_tmux_configuration
   else
     puts "✗ tmux configuration file doesn't exist: #{tmux_conf}".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Creating tmux configuration file...".blue
       create_tmux_conf(tmux_conf)
       return true
@@ -402,7 +371,7 @@ def check_tmux_plugin_manager
     else
       puts "✗ tmux Plugin Manager installation appears to be incomplete".red
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Attempting to fix tmux Plugin Manager installation...".blue
         
         # Remove corrupt installation and reinstall
@@ -427,7 +396,7 @@ def check_tmux_plugin_manager
   else
     puts "✗ tmux Plugin Manager is not installed".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install tmux Plugin Manager...".blue
       tpm_parent_dir = File.dirname(TPM_DIR)
       create_directory(tpm_parent_dir)
@@ -483,7 +452,7 @@ def check_tmux_plugins
   end
   
   # If any plugins are missing and fix mode is enabled, update config
-  if !missing_plugins.empty? && OPTIONS[:$1]
+  if !missing_plugins.empty? && options[:fix]
     puts "Adding missing plugin configurations to tmux.conf...".blue
     
     # Create backup
@@ -565,7 +534,7 @@ def main
       puts "  #{index + 1}. #{issue}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "\nAttempted to fix all issues. Please check the output above for any remaining problems.".blue
       puts "You may need to restart your terminal and reinstall tmux plugins:".blue
       puts "  1. Start a new tmux session with 'tmux'"

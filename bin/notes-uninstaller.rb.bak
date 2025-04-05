@@ -37,31 +37,7 @@ NOTES_DIR = File.join(HOME_DIR, 'notes')
 NVIM_CONFIG_DIR = File.join(HOME_DIR, '.config/nvim')
 NVIM_PLUGIN_DIR = File.join(NVIM_CONFIG_DIR, 'plugin')
 NOTES_PLUGIN_FILE = File.join(NVIM_PLUGIN_DIR, 'notes.vim')
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = { full: false, keep_data: true, force: false }
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--full", "Full uninstallation (remove all configurations and data)") do
-    OPTIONS[:full] = true
-  end
-  
-  opts.on("--no-keep-data", "Do not keep user data") do
-    OPTIONS[:keep_data] = false
-  end
-  
-  opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:force] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { 
@@ -73,11 +49,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: notes_uninstaller.rb [options]"
   
   opts.on("--no-keep-notes", "Remove all user notes") do
-    OPTIONS[:$1] = false
+    options[:keep_notes] = false
   end
   
   opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:$1] = true
+    options[:force] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -106,18 +82,13 @@ end
 
 def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-  backup_dir = File.join(HOME_DIR, "notes_backup_#{timestamp}")
+  backup_dir = File.join(HOME_DIR, "notes_uninstall_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  FileUtils.mkdir_p(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_notes(backup_dir)
   print_header("Backing Up Notes")
@@ -197,7 +168,7 @@ end
 def remove_notes_directory
   print_header("Removing Notes Directory")
   
-  if OPTIONS[:$1]
+  if options[:keep_notes]
     puts "Keeping notes directory as requested".green
     return true
   end
@@ -223,14 +194,14 @@ def main
   
   puts "This script will remove the notes system installed by the terminal-setup project.".yellow
   
-  if OPTIONS[:$1]
+  if options[:keep_notes]
     puts "Notes directory will be preserved.".green
   else
     puts "WARNING: Notes directory will be removed.".red
     puts "All your notes will be lost.".red
   end
   
-  unless OPTIONS[:$1]
+  unless options[:force]
     print "Are you sure you want to proceed? (y/n): "
     confirm = gets.chomp.downcase
     
@@ -272,7 +243,7 @@ def main
     puts "Notes system has been removed.".green
     puts "Your original notes were backed up to: #{backup_dir}".green
     
-    if OPTIONS[:$1]
+    if options[:keep_notes]
       puts "\nYour notes directory was preserved at: #{NOTES_DIR}".green
     else
       puts "\nYour notes directory was removed.".yellow

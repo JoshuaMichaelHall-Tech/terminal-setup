@@ -38,31 +38,7 @@ CONFIG_DIRS = {
   nvim_data: File.join(HOME_DIR, '.local/share/nvim'),
   undodir: File.join(HOME_DIR, '.vim/undodir')
 }
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = { full: false, keep_data: true, force: false }
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--full", "Full uninstallation (remove all configurations and data)") do
-    OPTIONS[:full] = true
-  end
-  
-  opts.on("--no-keep-data", "Do not keep user data") do
-    OPTIONS[:keep_data] = false
-  end
-  
-  opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:force] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { 
@@ -76,19 +52,19 @@ OptionParser.new do |opts|
   opts.banner = "Usage: nvim_uninstaller.rb [options]"
   
   opts.on("--full", "Full uninstallation (remove all configurations and data)") do
-    OPTIONS[:$1] = true
+    options[:full] = true
   end
   
   opts.on("--no-keep-plugins", "Remove all plugins") do
-    OPTIONS[:$1] = false
+    options[:keep_plugins] = false
   end
   
   opts.on("--no-keep-data", "Remove all user data") do
-    OPTIONS[:$1] = false
+    options[:keep_data] = false
   end
   
   opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:$1] = true
+    options[:force] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -117,18 +93,13 @@ end
 
 def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-  backup_dir = File.join(HOME_DIR, "nvim_env_backup_#{timestamp}")
+  backup_dir = File.join(HOME_DIR, "nvim_uninstall_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  FileUtils.mkdir_p(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_nvim_configs(backup_dir)
   print_header("Backing Up Neovim Configurations")
@@ -141,14 +112,14 @@ def backup_nvim_configs(backup_dir)
   end
   
   # Backup nvim data directory (plugins, etc.) if requested
-  if !OPTIONS[:$1] && Dir.exist?(CONFIG_DIRS[:nvim_data])
+  if !options[:keep_plugins] && Dir.exist?(CONFIG_DIRS[:nvim_data])
     nvim_data_backup = File.join(backup_dir, 'nvim_data')
     FileUtils.cp_r(CONFIG_DIRS[:nvim_data], nvim_data_backup)
     puts "Backed up Neovim data to #{nvim_data_backup}".green
   end
   
   # Backup undodir if requested
-  if !OPTIONS[:$1] && Dir.exist?(CONFIG_DIRS[:undodir])
+  if !options[:keep_data] && Dir.exist?(CONFIG_DIRS[:undodir])
     undodir_backup = File.join(backup_dir, 'undodir')
     FileUtils.cp_r(CONFIG_DIRS[:undodir], undodir_backup)
     puts "Backed up undo history to #{undodir_backup}".green
@@ -179,7 +150,7 @@ end
 def remove_nvim_plugins
   print_header("Removing Neovim Plugins")
   
-  if OPTIONS[:$1]
+  if options[:keep_plugins]
     puts "Keeping plugins as requested".green
     return true
   end
@@ -202,7 +173,7 @@ end
 def remove_nvim_undo_history
   print_header("Removing Neovim Undo History")
   
-  if OPTIONS[:$1]
+  if options[:keep_data]
     puts "Keeping undo history as requested".green
     return true
   end
@@ -227,25 +198,25 @@ def main
   print_header("Neovim Configuration Uninstaller v#{VERSION}")
   
   puts "This script will remove Neovim customizations installed by the terminal-setup project.".yellow
-  if OPTIONS[:$1]
+  if options[:full]
     puts "Running in FULL uninstall mode.".red
     puts "This will remove ALL Neovim configuration and data.".red
   else
     puts "Running in selective uninstall mode.".yellow
-    if OPTIONS[:$1]
+    if options[:keep_plugins]
       puts "Plugins will be preserved.".green
     else
       puts "Plugins will be removed.".red
     end
     
-    if OPTIONS[:$1]
+    if options[:keep_data]
       puts "Undo history and other user data will be preserved.".green
     else
       puts "Undo history and other user data will be removed.".red
     end
   end
   
-  unless OPTIONS[:$1]
+  unless options[:force]
     print "Are you sure you want to proceed? (y/n): "
     confirm = gets.chomp.downcase
     
@@ -288,7 +259,7 @@ def main
     puts "Your original configurations were backed up to: #{backup_dir}".green
     
     puts "\nNext steps:".blue
-    if OPTIONS[:$1]
+    if options[:full]
       puts "1. If you want to completely remove Neovim, you can run:"
       puts "   brew uninstall neovim"
     else

@@ -39,31 +39,7 @@ CONFIG_DIRS = {
   notes: File.join(HOME_DIR, 'notes'),
   undodir: File.join(HOME_DIR, '.vim/undodir')
 }
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = { full: false, keep_data: true, force: false }
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--full", "Full uninstallation (remove all configurations and data)") do
-    OPTIONS[:full] = true
-  end
-  
-  opts.on("--no-keep-data", "Do not keep user data") do
-    OPTIONS[:keep_data] = false
-  end
-  
-  opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:force] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { full: false, keep_data: true, force: false }
@@ -72,15 +48,15 @@ OptionParser.new do |opts|
   opts.banner = "Usage: core_uninstaller.rb [options]"
   
   opts.on("--full", "Full uninstallation (remove all configurations and data)") do
-    OPTIONS[:$1] = true
+    options[:full] = true
   end
   
   opts.on("--no-keep-data", "Do not keep user data") do
-    OPTIONS[:$1] = false
+    options[:keep_data] = false
   end
   
   opts.on("--force", "Force uninstallation without confirmation") do
-    OPTIONS[:$1] = true
+    options[:force] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -109,25 +85,20 @@ end
 
 def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-  backup_dir = File.join(HOME_DIR, "core_env_backup_#{timestamp}")
+  backup_dir = File.join(HOME_DIR, "core_uninstall_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
+  FileUtils.mkdir_p(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
-
 
 def backup_configs(backup_dir)
   print_header("Backing Up Configurations")
   
   # Create subdirectories in backup directory
   CONFIG_DIRS.each do |name, dir|
-    next if name == :notes && OPTIONS[:$1] # Skip notes if keeping data
+    next if name == :notes && options[:keep_data] # Skip notes if keeping data
     
     if Dir.exist?(dir)
       backup_subdir = File.join(backup_dir, name.to_s)
@@ -188,7 +159,7 @@ def remove_bin_scripts
   end
   
   # Check if bin directory is empty and remove it if full uninstall
-  if OPTIONS[:$1] && Dir.exist?(bin_dir) && Dir.empty?(bin_dir)
+  if options[:full] && Dir.exist?(bin_dir) && Dir.empty?(bin_dir)
     begin
       Dir.rmdir(bin_dir)
       puts "Removed empty bin directory".green
@@ -215,9 +186,9 @@ def remove_config_files
   end
   
   # If full uninstall and not keeping data, remove config directories
-  if OPTIONS[:$1] && !OPTIONS[:$1]
+  if options[:full] && !options[:keep_data]
     CONFIG_DIRS.each do |name, dir|
-      next if name == :notes && OPTIONS[:$1] # Skip notes if keeping data
+      next if name == :notes && options[:keep_data] # Skip notes if keeping data
       
       if Dir.exist?(dir)
         begin
@@ -238,9 +209,9 @@ def main
   print_header("Core Environment Uninstaller v#{VERSION}")
   
   puts "This script will remove the core environment components installed by the terminal-setup project.".yellow
-  if OPTIONS[:$1]
+  if options[:full]
     puts "Running in FULL uninstall mode. This will remove all installed components.".red
-    if !OPTIONS[:$1]
+    if !options[:keep_data]
       puts "WARNING: User data will NOT be preserved.".red
     end
   else
@@ -248,7 +219,7 @@ def main
     puts "User data will be preserved.".green
   end
   
-  unless OPTIONS[:$1]
+  unless options[:force]
     print "Are you sure you want to proceed? (y/n): "
     confirm = gets.chomp.downcase
     
@@ -275,7 +246,7 @@ def main
     puts "Core environment has been removed.".green
     puts "Your original configurations were backed up to: #{backup_dir}".green
     
-    if OPTIONS[:$1]
+    if options[:keep_data]
       puts "\nYour user data in ~/notes has been preserved.".green
     else
       puts "\nAll user data has been removed.".yellow

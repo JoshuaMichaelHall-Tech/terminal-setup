@@ -41,7 +41,7 @@ CONFIG_DIRS = {
   undodir: File.join(HOME_DIR, '.vim/undodir')
 }
 
-VERSION = '0.2.2'
+VERSION = '0.2.1'
 
 # Parse options at the top level so it's available throughout the script
 OPTIONS = {}
@@ -91,16 +91,12 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def run_command(command)
   stdout, stderr, status = Open3.capture3(command)
@@ -116,17 +112,10 @@ def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
   backup_dir = File.join(HOME_DIR, "core_env_backup_#{timestamp}")
   
-  begin
-    FileUtils.mkdir_p(backup_dir)
-    puts "Created backup directory: #{backup_dir}".green
-    return backup_dir
-  rescue StandardError => e
-    puts "Error creating backup directory #{backup_dir}: #{e.message}".red
-    return backup_dir # Still return the intended path even if creation failed
-  end
-end
-ed path even if creation failed
-  end
+  create_directory(backup_dir)
+  puts "Created backup directory: #{backup_dir}".green
+  
+  backup_dir
 end
 
 def backup_configs(backup_dir)

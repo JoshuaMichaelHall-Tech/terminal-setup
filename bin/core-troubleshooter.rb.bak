@@ -40,27 +40,7 @@ CONFIG_DIRS = {
   undodir: File.join(HOME_DIR, '.vim/undodir')
 }
 REQUIRED_TOOLS = %w[ruby git zsh nvim tmux fzf fd rg]
-VERSION = '0.2.1'
-
-# Parse options at the top level so it's available throughout the script
-OPTIONS = {}
-OptionParser.new do |opts|
-  opts.banner = "Usage: fix-all-scripts.rb [options]"
-  
-  opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:fix] = true
-  end
-  
-  opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:verbose] = true
-  end
-  
-  opts.on("--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
-
+VERSION = '0.2.0'
 
 # Options parsing
 options = { fix: false, verbose: false }
@@ -69,11 +49,11 @@ OptionParser.new do |opts|
   opts.banner = "Usage: core_troubleshooter.rb [options]"
   
   opts.on("--fix", "Fix issues automatically") do
-    OPTIONS[:$1] = true
+    options[:fix] = true
   end
   
   opts.on("--verbose", "Show detailed information") do
-    OPTIONS[:$1] = true
+    options[:verbose] = true
   end
   
   opts.on("--help", "Show this help message") do
@@ -107,16 +87,12 @@ end
 def create_directory(dir)
   return true if Dir.exist?(dir)
   
-  begin
-    FileUtils.mkdir_p(dir)
-    puts "✓ Created directory: #{dir}".green
-    return true
-  rescue StandardError => e
-    puts "✗ Error creating directory #{dir}: #{e.message}".red
-    return false
-  end
+  FileUtils.mkdir_p(dir)
+  check_result("Created directory: #{dir}")
+rescue StandardError => e
+  puts "Error creating directory #{dir}: #{e.message}".red
+  false
 end
-
 
 def run_command(command)
   stdout, stderr, status = Open3.capture3(command)
@@ -150,7 +126,7 @@ def check_required_tools
     end
   end
   
-  if !missing_tools.empty? && OPTIONS[:$1]
+  if !missing_tools.empty? && options[:fix]
     puts "Attempting to install missing tools...".blue
     
     if command_exists?('brew')
@@ -191,7 +167,7 @@ def check_directories
       puts "✗ #{name} directory doesn't exist: #{dir}".red
       all_dirs_ok = false
       
-      if OPTIONS[:$1]
+      if options[:fix]
         puts "Creating #{name} directory...".blue
         if create_directory(dir)
           puts "✓ Created #{name} directory".green
@@ -202,7 +178,7 @@ def check_directories
     end
   end
   
-  if !all_dirs_ok && !OPTIONS[:$1]
+  if !all_dirs_ok && !options[:fix]
     puts "Run with --fix to create missing directories".yellow
   end
   
@@ -222,7 +198,7 @@ def check_permissions
         puts "✗ #{name} directory has incorrect permissions".red
         all_perms_ok = false
         
-        if OPTIONS[:$1]
+        if options[:fix]
           puts "Fixing permissions for #{name} directory...".blue
           begin
             FileUtils.chmod(0755, dir)
@@ -235,7 +211,7 @@ def check_permissions
     end
   end
   
-  if !all_perms_ok && !OPTIONS[:$1]
+  if !all_perms_ok && !options[:fix]
     puts "Run with --fix to fix directory permissions".yellow
   end
   
@@ -282,7 +258,7 @@ def check_notes_setup
     missing_subdirs << '.git'
   end
   
-  if !missing_subdirs.empty? && OPTIONS[:$1]
+  if !missing_subdirs.empty? && options[:fix]
     puts "Fixing notes setup...".blue
     
     # Create missing subdirectories
@@ -386,7 +362,7 @@ def check_bin_scripts
     end
   end
   
-  if !missing_scripts.empty? && OPTIONS[:$1]
+  if !missing_scripts.empty? && options[:fix]
     puts "Fixing bin scripts...".blue
     
     # Make existing scripts executable
@@ -424,7 +400,7 @@ def check_homebrew
   else
     puts "✗ Homebrew is not installed".red
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "Attempting to install Homebrew...".blue
       install_cmd = '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
       output, success = run_command(install_cmd)
@@ -493,7 +469,7 @@ def main
       puts "  #{index + 1}. #{issue}".yellow
     end
     
-    if OPTIONS[:$1]
+    if options[:fix]
       puts "\nAttempted to fix all issues. Please check the output above for any remaining problems.".blue
     else
       puts "\nRun this script with --fix option to attempt automatic fixes for these issues.".blue
