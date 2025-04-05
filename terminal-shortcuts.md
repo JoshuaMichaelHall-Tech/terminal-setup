@@ -1,6 +1,22 @@
-# Zsh Essential Shortcuts
+# Terminal Environment Shortcuts Reference
 
-> A concise reference for your terminal workflow using Zsh, Neovim, and tmux
+> A complete reference guide for your terminal-centric workflow
+
+## Table of Contents
+- [System Navigation](#system-navigation)
+- [Terminal (iTerm2)](#terminal-iterm2)
+- [Zsh Navigation](#zsh-navigation)
+- [Zsh Command Editing](#zsh-command-editing)
+- [Zsh Command History](#zsh-command-history)
+- [Zsh File Operations](#zsh-file-operations)
+- [tmux Basics](#tmux-basics)
+- [tmux Commands](#tmux-commands)
+- [Neovim Basics](#neovim-basics)
+- [Neovim Navigation](#neovim-navigation)
+- [Neovim LSP Integration](#neovim-lsp-integration)
+- [Git Aliases](#git-aliases)
+- [Notes System](#notes-system)
+- [Custom Functions](#custom-functions)
 
 ## System Navigation
 - `Cmd + Space`: Spotlight search
@@ -42,7 +58,7 @@
 - `ls *(/)`: List only directories
 - `ls **/*.rb`: Recursively list all Ruby files
 
-## tmux
+## tmux Basics
 > Prefix key is `Ctrl + a`
 - `Prefix + c`: Create new window
 - `Prefix + n/p`: Next/previous window
@@ -83,6 +99,14 @@
 - `<leader>ca`: Code action
 - `[d/]d`: Go to previous/next diagnostic
 
+## Neovim LSP Integration
+- `gd`: Go to definition
+- `gr`: Go to references
+- `K`: Show documentation
+- `<leader>rn`: Rename symbol
+- `<leader>ca`: Code action
+- `<leader>f`: Format code
+
 ## Git Aliases
 - `gs`: git status
 - `ga`: git add
@@ -93,7 +117,7 @@
 - `<leader>gc`: Git commit (Fugitive)
 - `<leader>gp`: Git push (Fugitive)
 
-## Notes System Commands
+## Notes System
 - `:Daily`: Create/edit today's daily note
 - `:Project`: Create/edit a project note
 - `:Learning`: Create/edit a learning note
