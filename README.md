@@ -195,6 +195,15 @@ terminal-setup/
 
 While this is primarily my personal configuration, suggestions and improvements are welcome! Feel free to open an issue or pull request.
 
+## Acknowledgements
+
+This project was developed with assistance from Anthropic's Claude AI assistant, which helped with:
+- Documentation writing and organization
+- Code structure suggestions
+- Troubleshooting and debugging assistance
+
+Claude was used as a development aid while all final implementation decisions and code review were performed by the human developer.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
