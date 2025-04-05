@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# Terminal Environment Minimal Update
+# Notes System Installer
 # Author: Joshua Michael Hall
 # License: MIT
 # Date: April 4, 2025
@@ -7,6 +7,7 @@
 require 'fileutils'
 require 'open3'
 require 'date'
+require 'optparse'
 
 # Color definitions
 class String
@@ -33,29 +34,37 @@ end
 
 # Constants
 HOME_DIR = ENV['HOME']
-CONFIG_DIRS = {
-  nvim: File.join(HOME_DIR, '.config/nvim'),
-  bin: File.join(HOME_DIR, 'bin'),
-  notes: File.join(HOME_DIR, 'notes'),
-  tmux: File.join(HOME_DIR, '.tmux'),
-  undodir: File.join(HOME_DIR, '.vim/undodir')
+NOTES_DIR = File.join(HOME_DIR, 'notes')
+NOTES_SUBDIRS = {
+  daily: File.join(NOTES_DIR, 'daily'),
+  projects: File.join(NOTES_DIR, 'projects'),
+  learning: File.join(NOTES_DIR, 'learning'),
+  templates: File.join(NOTES_DIR, 'templates')
 }
+NVIM_CONFIG_DIR = File.join(HOME_DIR, '.config/nvim')
+NVIM_PLUGIN_DIR = File.join(NVIM_CONFIG_DIR, 'plugin')
+NOTES_PLUGIN_FILE = File.join(NVIM_PLUGIN_DIR, 'notes.vim')
+VERSION = '0.2.0'
 
-CONFIG_FILES = {
-  zshrc: File.join(HOME_DIR, '.zshrc'),
-  tmux_conf: File.join(HOME_DIR, '.tmux.conf'),
-  p10k: File.join(HOME_DIR, '.p10k.zsh'),
-  nvim_init: File.join(CONFIG_DIRS[:nvim], 'init.lua'),
-  nvim_plugins: File.join(CONFIG_DIRS[:nvim], 'lua/plugins.lua'),
-  notes_vim: File.join(CONFIG_DIRS[:nvim], 'plugin/notes.vim')
-}
+# Options parsing
+options = { minimal: false, fix: false }
 
-TEMPLATE_DIRS = {
-  notes_daily: File.join(CONFIG_DIRS[:notes], 'daily'),
-  notes_projects: File.join(CONFIG_DIRS[:notes], 'projects'),
-  notes_learning: File.join(CONFIG_DIRS[:notes], 'learning'),
-  notes_templates: File.join(CONFIG_DIRS[:notes], 'templates')
-}
+OptionParser.new do |opts|
+  opts.banner = "Usage: notes_installer.rb [options]"
+  
+  opts.on("--minimal", "Minimal installation (config only)") do
+    options[:minimal] = true
+  end
+  
+  opts.on("--fix", "Fix mode (only fix existing installation)") do
+    options[:fix] = true
+  end
+  
+  opts.on("--help", "Show this help message") do
+    puts opts
+    exit
+  end
+end.parse!
 
 # Helper Methods
 def print_header(text)
@@ -63,6 +72,14 @@ def print_header(text)
   puts "  #{text}".blue
   puts "#{"=" * 70}".blue
   puts
+end
+
+def command_exists?(command)
+  system("command -v #{command} > /dev/null 2>&1")
+end
+
+def file_exists?(file)
+  File.exist?(file)
 end
 
 def check_result(message, result = $?.success?)
@@ -97,9 +114,48 @@ rescue StandardError => e
   false
 end
 
+def file_contains?(file, pattern)
+  return false unless File.exist?(file)
+  
+  File.read(file) =~ Regexp.new(pattern)
+end
+
+def append_to_file(file, content)
+  return false unless File.exist?(file)
+  
+  File.open(file, 'a') do |f|
+    f.puts content
+  end
+  check_result("Updated file: #{file}")
+rescue StandardError => e
+  puts "Error updating file #{file}: #{e.message}".red
+  false
+end
+
+def backup_file(file)
+  return false unless File.exist?(file)
+  
+  backup = "#{file}.bak.#{Time.now.strftime('%Y%m%d%H%M%S')}"
+  FileUtils.cp(file, backup)
+  check_result("Created backup: #{backup}")
+rescue StandardError => e
+  puts "Error backing up file #{file}: #{e.message}".red
+  false
+end
+
+def run_command(command)
+  stdout, stderr, status = Open3.capture3(command)
+  success = status.success?
+  
+  return [stdout, success]
+rescue StandardError => e
+  puts "Error running command '#{command}': #{e.message}".red
+  return ["", false]
+end
+
 def create_backup_directory
   timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
-  backup_dir = File.join(HOME_DIR, "terminal_env_backup_#{timestamp}")
+  backup_dir = File.join(HOME_DIR, "notes_backup_#{timestamp}")
   
   create_directory(backup_dir)
   puts "Created backup directory: #{backup_dir}".green
@@ -107,120 +163,149 @@ def create_backup_directory
   backup_dir
 end
 
-def backup_existing_configs(backup_dir)
-  print_header("Backing Up Existing Configurations")
+def backup_notes(backup_dir)
+  print_header("Backing Up Existing Notes")
   
-  # Backup Neovim config
-  if Dir.exist?(CONFIG_DIRS[:nvim])
-    nvim_backup = File.join(backup_dir, 'nvim')
-    FileUtils.cp_r(CONFIG_DIRS[:nvim], nvim_backup)
-    puts "Backed up Neovim config to #{nvim_backup}".green
+  # Backup notes directory if it exists
+  if Dir.exist?(NOTES_DIR)
+    notes_backup = File.join(backup_dir, 'notes')
+    FileUtils.cp_r(NOTES_DIR, notes_backup)
+    puts "Backed up notes directory to #{notes_backup}".green
   end
   
-  # Backup tmux config
-  if File.exist?(CONFIG_FILES[:tmux_conf])
-    tmux_backup = File.join(backup_dir, 'tmux.conf')
-    FileUtils.cp(CONFIG_FILES[:tmux_conf], tmux_backup)
-    puts "Backed up tmux config to #{tmux_backup}".green
+  # Backup Neovim notes plugin if it exists
+  if File.exist?(NOTES_PLUGIN_FILE)
+    plugin_backup = File.join(backup_dir, 'notes.vim')
+    FileUtils.cp(NOTES_PLUGIN_FILE, plugin_backup)
+    puts "Backed up notes plugin to #{plugin_backup}".green
   end
   
-  # Backup Zsh config
-  if File.exist?(CONFIG_FILES[:zshrc])
-    zsh_backup = File.join(backup_dir, 'zshrc')
-    FileUtils.cp(CONFIG_FILES[:zshrc], zsh_backup)
-    puts "Backed up .zshrc to #{zsh_backup}".green
-  end
-  
-  # Backup p10k config
-  if File.exist?(CONFIG_FILES[:p10k])
-    p10k_backup = File.join(backup_dir, 'p10k.zsh')
-    FileUtils.cp(CONFIG_FILES[:p10k], p10k_backup)
-    puts "Backed up .p10k.zsh to #{p10k_backup}".green
-  end
-  
-  # Backup notes templates if they exist
-  if Dir.exist?(File.join(CONFIG_DIRS[:notes], 'templates'))
-    templates_backup = File.join(backup_dir, 'notes_templates')
-    FileUtils.mkdir_p(templates_backup)
-    FileUtils.cp_r(Dir.glob(File.join(CONFIG_DIRS[:notes], 'templates', '*')), templates_backup)
-    puts "Backed up notes templates to #{templates_backup}".green
-  end
-  
-  puts "All existing configurations backed up to #{backup_dir}".green
+  puts "Existing notes configuration backed up to #{backup_dir}".green
 end
 
-def create_tmux_conf(file)
-  content = <<~TMUX
-    # Terminal Development Environment tmux Configuration
+# Template creation functions
+def create_daily_template(file)
+  content = <<~TEMPLATE
+    # Daily Note: {{date}}
 
-    # Remap prefix from 'C-b' to 'C-a'
-    unbind C-b
-    set-option -g prefix C-a
-    bind-key C-a send-prefix
+    ## Focus Areas
+    - 
 
-    # Split panes using | and -
-    bind | split-window -h
-    bind - split-window -v
-    unbind '"'
-    unbind %
+    ## Notes
+    - 
 
-    # Reload config file
-    bind r source-file ~/.tmux.conf \\; display "Config reloaded!"
+    ## Tasks
+    - [ ] 
 
-    # Switch panes using Alt-arrow without prefix
-    bind -n M-Left select-pane -L
-    bind -n M-Right select-pane -R
-    bind -n M-Up select-pane -U
-    bind -n M-Down select-pane -D
+    ## Progress
+    - 
 
-    # Enable mouse control
-    set -g mouse on
-
-    # Don't rename windows automatically
-    set-option -g allow-rename off
-
-    # Improve colors
-    set -g default-terminal "screen-256color"
-    set -ga terminal-overrides ",xterm-256color:Tc"
-
-    # Start window numbering at 1
-    set -g base-index 1
-    setw -g pane-base-index 1
-
-    # Increase scrollback buffer size
-    set -g history-limit 10000
-
-    # Display tmux messages for 4 seconds
-    set -g display-time 4000
-
-    # Vim-like copy mode
-    setw -g mode-keys vi
-    bind-key -T copy-mode-vi v send-keys -X begin-selection
-    bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
-
-    # Status bar
-    set -g status-style bg=default
-    set -g status-left-length 40
-    set -g status-right-length 60
-    set -g status-position bottom
-    set -g status-left '#[fg=green]#S #[fg=black]• #[fg=green,bright]#(whoami)#[fg=black] • #[fg=green]#h '
-    set -g status-right '#[fg=white,bg=default]%a %H:%M #[fg=white,bg=default]%Y-%m-%d '
-
-    # List of plugins
-    set -g @plugin 'tmux-plugins/tpm'
-    set -g @plugin 'tmux-plugins/tmux-sensible'
-    set -g @plugin 'tmux-plugins/tmux-resurrect'
-    set -g @plugin 'tmux-plugins/tmux-continuum'
-    set -g @plugin 'tmux-plugins/tmux-yank'
-
-    # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
-    run '~/.tmux/plugins/tpm/tpm'
-  TMUX
+    ## Links
+    - 
+  TEMPLATE
   
   create_file(file, content)
 end
 
-def create_notes_vim(file)
+def create_project_template(file)
+  content = <<~TEMPLATE
+    # Project: {{project_name}}
+
+    ## Overview
+    - **Goal**: 
+    - **Timeline**: 
+    - **Status**: 
+
+    ## Requirements
+    - 
+
+    ## Notes
+    - 
+
+    ## Tasks
+    - [ ] 
+
+    ## Resources
+    - 
+  TEMPLATE
+  
+  create_file(file, content)
+end
+
+def create_learning_template(file)
+  content = <<~TEMPLATE
+    # Learning: {{topic}}
+
+    ## Objectives
+    - 
+
+    ## Key Concepts
+    - 
+
+    ## Code Examples
+    ```
+    # Code example here
+    ```
+
+    ## Resources
+    - 
+
+    ## Questions
+    - 
+
+    ## Practice
+    - 
+  TEMPLATE
+  
+  create_file(file, content)
+end
+
+def create_readme(file)
+  content = <<~README
+    # Notes System
+
+    This directory contains a structured notes system for:
+
+    - **Daily notes**: Daily logs and journals
+    - **Project notes**: Documentation for specific projects
+    - **Learning notes**: Study materials organized by topic
+
+    ## Usage
+
+    Use the following commands in Neovim:
+
+    - `:Daily` - Create or edit today's daily note
+    - `:Project` - Create or edit a project note
+    - `:Learning` - Create or edit a learning note
+    - `:NotesFiles` - Find notes files
+    - `:NotesGrep` - Search within notes
+    - `:RecentNotes` - Show recently modified notes
+
+    This notes system is managed by a Neovim plugin and is backed by Git for version control.
+  README
+  
+  create_file(file, content)
+end
+
+def create_gitignore(file)
+  content = <<~GITIGNORE
+    # Ignore temporary files
+    *~
+    *.swp
+    *.swo
+
+    # Ignore OS files
+    .DS_Store
+    Thumbs.db
+
+    # Ignore private notes
+    private/
+  GITIGNORE
+  
+  create_file(file, content)
+end
+
+def create_notes_plugin(file)
   content = <<~NOTES
     " Notes System Plugin for Neovim
     " Author: Joshua Michael Hall
@@ -276,23 +361,7 @@ def create_notes_vim(file)
       execute 'edit ' . l:daily_path
       
       " If file is new, populate with template
-      if line('
-          require('telescope').load_extension('fzf')
-        end,
-      },
-      
-      -- Which-key for showing key mappings
-      {
-        'folke/which-key.nvim',
-        config = function()
-          require('which-key').setup()
-        end,
-      },
-    }
-  PLUGINS
-  
-  create_file(file, content)
-end) == 1 && getline(1) == ''
+      if line(') == 1 && getline(1) == ''
         let l:template_path = g:notes_templates_dir . '/daily.md'
         if filereadable(l:template_path)
           let l:template = readfile(l:template_path)
@@ -341,23 +410,7 @@ end) == 1 && getline(1) == ''
       execute 'edit ' . l:notes_path
       
       " If file is new, populate with template
-      if line('
-          require('telescope').load_extension('fzf')
-        end,
-      },
-      
-      -- Which-key for showing key mappings
-      {
-        'folke/which-key.nvim',
-        config = function()
-          require('which-key').setup()
-        end,
-      },
-    }
-  PLUGINS
-  
-  create_file(file, content)
-end) == 1 && getline(1) == ''
+      if line(') == 1 && getline(1) == ''
         let l:template_path = g:notes_templates_dir . '/project.md'
         if filereadable(l:template_path)
           let l:template = readfile(l:template_path)
@@ -413,23 +466,7 @@ end) == 1 && getline(1) == ''
       execute 'edit ' . l:notes_path
       
       " If file is new, populate with template
-      if line('
-          require('telescope').load_extension('fzf')
-        end,
-      },
-      
-      -- Which-key for showing key mappings
-      {
-        'folke/which-key.nvim',
-        config = function()
-          require('which-key').setup()
-        end,
-      },
-    }
-  PLUGINS
-  
-  create_file(file, content)
-end) == 1 && getline(1) == ''
+      if line(') == 1 && getline(1) == ''
         let l:template_path = g:notes_templates_dir . '/learning.md'
         if filereadable(l:template_path)
           let l:template = readfile(l:template_path)
@@ -648,52 +685,265 @@ end) == 1 && getline(1) == ''
   create_file(file, content)
 end
 
-# Main function for minimal update
-def run_minimal_update
-  print_header("Running Minimal Update")
+def initialize_git_repository(dir)
+  return true if Dir.exist?(File.join(dir, '.git'))
   
-  # Create backup
-  backup_dir = create_backup_directory
-  backup_existing_configs(backup_dir)
+  Dir.chdir(dir) do
+    run_command('git init')
+    run_command('git add README.md')
+    run_command('git commit -m "Initialize notes repository"')
+  end
   
-  # Create directories
-  CONFIG_DIRS.each { |name, dir| create_directory(dir) }
-  TEMPLATE_DIRS.each { |name, dir| create_directory(dir) }
-  
-  # Update Neovim configuration
-  create_directory(File.join(CONFIG_DIRS[:nvim], 'lua'))
-  create_directory(File.join(CONFIG_DIRS[:nvim], 'plugin'))
-  create_nvim_plugins(CONFIG_FILES[:nvim_plugins])
-  create_notes_vim(CONFIG_FILES[:notes_vim])
-  
-  # Update tmux configuration
-  create_tmux_conf(CONFIG_FILES[:tmux_conf])
-  
-  # Set version file
-  version_file = File.join(HOME_DIR, '.terminal_env_version')
-  File.write(version_file, "version=0.1.0\ndate=#{Time.now.strftime('%Y-%m-%d')}\nmode=minimal")
-  
-  puts "\nMinimal update completed successfully!".green
-  puts "\nNext steps:"
-  puts "1. Restart your terminal"
-  puts "2. Start using your updated environment with 'wk dev' or 'wk notes'"
+  check_result("Initialized Git repository in #{dir}")
 end
 
-# Run the minimal update
-run_minimal_update
-          require('telescope').load_extension('fzf')
-        end,
-      },
-      
-      -- Which-key for showing key mappings
-      {
-        'folke/which-key.nvim',
-        config = function()
-          require('which-key').setup()
-        end,
-      },
-    }
-  PLUGINS
+# Installation functions
+def check_neovim
+  print_header("Checking Neovim Installation")
   
-  create_file(file, content)
+  if command_exists?('nvim')
+    version, _ = run_command('nvim --version')
+    puts "Neovim is installed: #{version.split("\n").first}".green
+    return true
+  else
+    puts "Neovim is not installed".red
+    puts "Notes plugin requires Neovim to be installed".red
+    puts "Please install Neovim before continuing".yellow
+    return false
+  end
 end
+
+def create_notes_structure
+  print_header("Creating Notes Directory Structure")
+  
+  # Create main notes directory
+  success = create_directory(NOTES_DIR)
+  
+  # Create subdirectories
+  NOTES_SUBDIRS.each do |name, dir|
+    success &= create_directory(dir)
+  end
+  
+  # Create templates
+  daily_template = File.join(NOTES_SUBDIRS[:templates], 'daily.md')
+  project_template = File.join(NOTES_SUBDIRS[:templates], 'project.md')
+  learning_template = File.join(NOTES_SUBDIRS[:templates], 'learning.md')
+  
+  success &= create_daily_template(daily_template)
+  success &= create_project_template(project_template)
+  success &= create_learning_template(learning_template)
+  
+  # Create README
+  readme_file = File.join(NOTES_DIR, 'README.md')
+  success &= create_readme(readme_file)
+  
+  # Create .gitignore
+  gitignore_file = File.join(NOTES_DIR, '.gitignore')
+  success &= create_gitignore(gitignore_file)
+  
+  # Initialize Git repository
+  success &= initialize_git_repository(NOTES_DIR)
+  
+  success
+end
+
+def install_notes_plugin
+  print_header("Installing Notes Plugin for Neovim")
+  
+  # Create Neovim plugin directory if it doesn't exist
+  create_directory(NVIM_PLUGIN_DIR)
+  
+  # Create notes.vim plugin file
+  create_notes_plugin(NOTES_PLUGIN_FILE)
+end
+
+def check_notes_integration
+  print_header("Checking Notes Integration with Neovim")
+  
+  # Check if init.lua sources notes.vim
+  init_file = File.join(NVIM_CONFIG_DIR, 'init.lua')
+  
+  if File.exist?(init_file)
+    init_content = File.read(init_file)
+    
+    if init_content.include?('notes.vim')
+      puts "✓ Neovim init.lua includes notes.vim plugin".green
+    else
+      puts "✗ Neovim init.lua doesn't include notes.vim plugin".red
+      
+      if options[:fix]
+        puts "Adding notes.vim to init.lua...".blue
+        append_to_file(init_file, "\n-- Notes system\nvim.cmd('source ' .. vim.fn.stdpath('config') .. '/plugin/notes.vim')")
+      else
+        puts "Add the following line to your init.lua:".yellow
+        puts "vim.cmd('source ' .. vim.fn.stdpath('config') .. '/plugin/notes.vim')".yellow
+      end
+    end
+  else
+    puts "✗ Neovim init.lua doesn't exist".red
+    puts "Please set up Neovim configuration first".yellow
+  end
+end
+
+# Main installation functions
+def run_full_install
+  print_header("Running Full Notes System Installation")
+  
+  # Create backup first
+  backup_dir = create_backup_directory
+  backup_notes(backup_dir)
+  
+  # Check Neovim installation
+  success = check_neovim
+  
+  # Create notes directory structure
+  success &&= create_notes_structure
+  
+  # Install notes plugin for Neovim
+  success &&= install_notes_plugin
+  
+  # Check notes integration with Neovim
+  check_notes_integration
+  
+  # Set version marker
+  version_file = File.join(HOME_DIR, '.notes_version')
+  File.write(version_file, "version=#{VERSION}\ndate=#{Time.now.strftime('%Y-%m-%d')}")
+  
+  success
+end
+
+def run_minimal_update
+  print_header("Running Minimal Notes System Update")
+  
+  # Create backup first
+  backup_dir = create_backup_directory
+  backup_notes(backup_dir)
+  
+  # Create missing directories and files
+  success = true
+  
+  # Create notes directory if it doesn't exist
+  success &= create_directory(NOTES_DIR) unless Dir.exist?(NOTES_DIR)
+  
+  # Create subdirectories if they don't exist
+  NOTES_SUBDIRS.each do |name, dir|
+    success &= create_directory(dir) unless Dir.exist?(dir)
+  end
+  
+  # Create templates if they don't exist
+  daily_template = File.join(NOTES_SUBDIRS[:templates], 'daily.md')
+  project_template = File.join(NOTES_SUBDIRS[:templates], 'project.md')
+  learning_template = File.join(NOTES_SUBDIRS[:templates], 'learning.md')
+  
+  success &= create_daily_template(daily_template) unless File.exist?(daily_template)
+  success &= create_project_template(project_template) unless File.exist?(project_template)
+  success &= create_learning_template(learning_template) unless File.exist?(learning_template)
+  
+  # Create README if it doesn't exist
+  readme_file = File.join(NOTES_DIR, 'README.md')
+  success &= create_readme(readme_file) unless File.exist?(readme_file)
+  
+  # Create .gitignore if it doesn't exist
+  gitignore_file = File.join(NOTES_DIR, '.gitignore')
+  success &= create_gitignore(gitignore_file) unless File.exist?(gitignore_file)
+  
+  # Initialize Git repository if it doesn't exist
+  success &= initialize_git_repository(NOTES_DIR) unless Dir.exist?(File.join(NOTES_DIR, '.git'))
+  
+  # Create notes plugin file if it doesn't exist
+  if Dir.exist?(NVIM_PLUGIN_DIR) && !File.exist?(NOTES_PLUGIN_FILE)
+    success &= create_notes_plugin(NOTES_PLUGIN_FILE)
+  end
+  
+  # Update version marker
+  version_file = File.join(HOME_DIR, '.notes_version')
+  File.write(version_file, "version=#{VERSION}\ndate=#{Time.now.strftime('%Y-%m-%d')}\nmode=minimal")
+  
+  success
+end
+
+def run_fix_mode
+  print_header("Running Fix Mode for Notes System")
+  
+  # Create backup first
+  backup_dir = create_backup_directory
+  backup_notes(backup_dir)
+  
+  # Fix notes directory structure
+  success = true
+  
+  # Create notes directory if it doesn't exist
+  success &= create_directory(NOTES_DIR) unless Dir.exist?(NOTES_DIR)
+  
+  # Create subdirectories if they don't exist
+  NOTES_SUBDIRS.each do |name, dir|
+    success &= create_directory(dir) unless Dir.exist?(dir)
+  end
+  
+  # Create templates if they don't exist
+  daily_template = File.join(NOTES_SUBDIRS[:templates], 'daily.md')
+  project_template = File.join(NOTES_SUBDIRS[:templates], 'project.md')
+  learning_template = File.join(NOTES_SUBDIRS[:templates], 'learning.md')
+  
+  success &= create_daily_template(daily_template) unless File.exist?(daily_template)
+  success &= create_project_template(project_template) unless File.exist?(project_template)
+  success &= create_learning_template(learning_template) unless File.exist?(learning_template)
+  
+  # Create README if it doesn't exist
+  readme_file = File.join(NOTES_DIR, 'README.md')
+  success &= create_readme(readme_file) unless File.exist?(readme_file)
+  
+  # Create .gitignore if it doesn't exist
+  gitignore_file = File.join(NOTES_DIR, '.gitignore')
+  success &= create_gitignore(gitignore_file) unless File.exist?(gitignore_file)
+  
+  # Initialize Git repository if it doesn't exist
+  success &= initialize_git_repository(NOTES_DIR) unless Dir.exist?(File.join(NOTES_DIR, '.git'))
+  
+  # Create Neovim plugin directory if it doesn't exist
+  success &= create_directory(NVIM_PLUGIN_DIR) unless Dir.exist?(NVIM_PLUGIN_DIR)
+  
+  # Create notes plugin file
+  if !File.exist?(NOTES_PLUGIN_FILE) || options[:fix]
+    backup_file(NOTES_PLUGIN_FILE) if File.exist?(NOTES_PLUGIN_FILE)
+    success &= create_notes_plugin(NOTES_PLUGIN_FILE)
+  end
+  
+  # Check notes integration with Neovim
+  check_notes_integration
+  
+  success
+end
+
+# Main entry point
+def main
+  print_header("Notes System Installer v#{VERSION}")
+  
+  if options[:fix]
+    success = run_fix_mode
+  elsif options[:minimal]
+    success = run_minimal_update
+  else
+    success = run_full_install
+  end
+  
+  if success
+    print_header("Notes System Installation Completed Successfully")
+    puts "Your notes system is now set up.".green
+    puts "\nNext steps:".blue
+    puts "1. Start Neovim with 'nvim'"
+    puts "2. Create a daily note with :Daily"
+    puts "3. Create a project note with :Project"
+    puts "4. Create a learning note with :Learning"
+    puts "5. Search notes with :NotesFiles or :NotesGrep"
+  else
+    print_header("Installation Completed with Errors")
+    puts "Some components may not have installed correctly.".red
+    puts "Please check the error messages above.".yellow
+  end
+  
+  return success ? 0 : 1
+end
+
+# Run the script
+exit main
